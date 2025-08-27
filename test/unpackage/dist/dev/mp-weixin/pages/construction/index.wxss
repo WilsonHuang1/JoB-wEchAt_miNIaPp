@@ -1,0 +1,7 @@
+
+.container {
+  padding: 20rpx;
+}
+.title {
+  font-size: 32rpx;
+}
