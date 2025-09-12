@@ -62,3 +62,10 @@
 .construction {
   border-left: 12rpx solid #FF9500;
 }
+.test-button {
+  background-color: #007aff;
+  color: white;
+  padding: 20rpx;
+  margin: 20rpx;
+  border-radius: 10rpx;
+}

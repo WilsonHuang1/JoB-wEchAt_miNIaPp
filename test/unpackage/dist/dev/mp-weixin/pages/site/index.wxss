@@ -1,7 +1,259 @@
-
+/* 水平间距 */
+/* 水平间距 */
 .container {
   padding: 20rpx;
+  background-color: #f5f5f5;
+  min-height: 100vh;
 }
-.title {
+.form-section {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+}
+.section-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 30rpx;
+  text-align: center;
+}
+.form-group {
+  margin-bottom: 30rpx;
+}
+.label {
+  display: block;
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 10rpx;
+  font-weight: 500;
+}
+.input {
+  width: calc(100% - 40rpx);
+  padding: 20rpx;
+  border: 2rpx solid #e5e5e5;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  background-color: #fafafa;
+}
+.input:focus {
+  border-color: #007AFF;
+  background-color: white;
+}
+.location-wrapper {
+  display: flex;
+  gap: 20rpx;
+}
+.location-input {
+  flex: 1;
+}
+.location-btn {
+  width: 80rpx;
+  height: 80rpx;
+  background: #007aff;
+  color: white;
+  border: none;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+}
+.cleaning-scope-section {
+  border: 2rpx solid #e5e5e5;
+  border-radius: 12rpx;
+  background-color: #fafafa;
+  overflow: hidden;
+}
+.cleaning-scope-title {
+  display: block;
+  padding: 20rpx;
+  background-color: #f0f0f0;
+  color: #333;
+  font-size: 28rpx;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-user-select: none;
+          user-select: none;
+}
+.cleaning-scope-title:active {
+  background-color: #e0e0e0;
+}
+.cleaning-options {
+  padding: 20rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 15rpx;
+}
+.option-label {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  cursor: pointer;
+}
+.option-label checkbox {
+  transform: scale(1.2);
+}
+.option-label text {
+  font-size: 28rpx;
+  color: #333;
+}
+.picker {
+  padding: 20rpx;
+  border: 2rpx solid #e5e5e5;
+  border-radius: 12rpx;
+  background-color: #fafafa;
+  font-size: 28rpx;
+  color: #333;
+}
+.button-group {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 40rpx;
+}
+.btn-save, .btn-cancel {
+  flex: 1;
+  padding: 24rpx 0;
+  border-radius: 12rpx;
   font-size: 32rpx;
+  border: none;
+}
+.btn-save {
+  background-color: #007AFF;
+  color: white;
+}
+.btn-save:active {
+  background-color: #0066CC;
+}
+.btn-cancel {
+  background-color: #f0f0f0;
+  color: #666;
+}
+.btn-cancel:active {
+  background-color: #e0e0e0;
+}
+.input-with-unit {
+  display: flex;
+  align-items: center;
+  border: 2rpx solid #e5e5e5;
+  border-radius: 12rpx;
+  background-color: #fafafa;
+}
+.input-with-unit:focus-within {
+  border-color: #007AFF;
+  background-color: white;
+}
+.unit-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+}
+.unit {
+  padding: 20rpx;
+  color: #666;
+  font-size: 28rpx;
+}
+.login-status {
+  background-color: #e8f5e8;
+  padding: 20rpx;
+  border-radius: 8rpx;
+  margin-bottom: 30rpx;
+  text-align: center;
+}
+.status-text {
+  color: #2e7d32;
+  font-size: 26rpx;
+}
+.readonly-input {
+  background-color: #f8f8f8;
+  color: #666;
+  cursor: not-allowed;
+}
+.readonly-field {
+  padding: 20rpx;
+  background-color: #f0f0f0;
+  border: 2rpx solid #d0d0d0;
+  border-radius: 12rpx;
+  min-height: 40rpx;
+  display: flex;
+  align-items: center;
+}
+.readonly-text {
+  color: #333;
+  font-size: 28rpx;
+}
+.specs-section {
+  border-top: 1rpx solid #e5e5e5;
+  margin-top: 20rpx;
+}
+.spec-item {
+  border-bottom: 1rpx solid #f0f0f0;
+  padding: 20rpx 0;
+}
+.spec-item:last-child {
+  border-bottom: none;
+}
+.spec-title {
+  font-size: 26rpx;
+  font-weight: bold;
+  color: #666;
+  margin-bottom: 15rpx;
+}
+.spec-field {
+  margin-bottom: 15rpx;
+}
+.spec-label {
+  font-size: 24rpx;
+  color: #333;
+  margin-bottom: 8rpx;
+  display: block;
+}
+.spec-input {
+  width: calc(100% - 20rpx);
+  padding: 10rpx;
+  border: 1rpx solid #ddd;
+  border-radius: 6rpx;
+  font-size: 24rpx;
+  background-color: white;
+}
+.photo-section {
+  display: flex;
+  align-items: center;
+  gap: 15rpx;
+}
+.photo-btn {
+  padding: 10rpx 15rpx;
+  background-color: #007AFF;
+  color: white;
+  border: none;
+  border-radius: 6rpx;
+  font-size: 22rpx;
+}
+.photo-count {
+  font-size: 22rpx;
+  color: #666;
+}
+.pipe-material-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+.pipe-material-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+.material-option {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  cursor: pointer;
+}
+.material-option radio {
+  transform: scale(1.1);
+}
+.material-option text {
+  font-size: 24rpx;
+  color: #333;
+}
+.other-material-input {
+  margin-top: 10rpx;
+  border-color: #007AFF;
 }

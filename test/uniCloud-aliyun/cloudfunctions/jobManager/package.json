@@ -1,0 +1,7 @@
+{
+  "name": "jobManager",
+  "dependencies": {},
+  "extensions": {
+    "uni-cloud-jql": {}
+  }
+}

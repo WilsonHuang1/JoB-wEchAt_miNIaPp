@@ -1,0 +1,1 @@
+<view class="container"><view class="title">Job Miniapp Functions Test</view><button class="test-btn" bindtap="{{a}}">Test User Auth</button><button class="test-btn" bindtap="{{b}}">Test Create Job</button><button class="test-btn" bindtap="{{c}}">Test Get Jobs</button><view class="result-container"><text class="result-text">{{d}}</text></view></view>

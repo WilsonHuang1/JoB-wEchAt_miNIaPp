@@ -3,6 +3,7 @@
     "pages/index/index",
     "pages/site/index",
     "pages/construction/index",
+    "pages/test/test",
     "pages/business/index",
     "pages/business/info",
     "pages/business/customer",

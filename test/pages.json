@@ -1,59 +1,64 @@
 {
-  "pages": [
-    {
-      "path": "pages/index/index",
-      "style": {
-        "navigationBarTitleText": "主界面",
+    "pages": [{
+            "path": "pages/index/index",
+            "style": {
+                "navigationBarTitleText": "主界面",
+                "backgroundColor": "#f5f5f5"
+            }
+        },
+        {
+            "path": "pages/site/index",
+            "style": {
+                "navigationBarTitleText": "踏勘"
+            }
+        },
+        {
+            "path": "pages/construction/index",
+            "style": {
+                "navigationBarTitleText": "施工"
+            }
+        },
+        {
+            "path": "pages/test/test",
+            "style": {
+                "navigationBarTitleText": "uniCloud Test"
+            }
+        },
+        {
+            "path": "pages/business/index",
+            "style": {
+                "navigationBarTitleText": "营业管理"
+            }
+        },
+        {
+            "path": "pages/business/info",
+            "style": {
+                "navigationBarTitleText": "基础信息录入"
+            }
+        },
+        {
+            "path": "pages/business/customer",
+            "style": {
+                "navigationBarTitleText": "商户信息"
+            }
+        },
+        {
+            "path": "pages/site/status",
+            "style": {
+                "navigationBarTitleText": "现场状态"
+            }
+        },
+        {
+            "path": "pages/construction/info",
+            "style": {
+                "navigationBarTitleText": "施工信息录入"
+            }
+        }
+    ],
+    "globalStyle": {
+        "navigationBarTextStyle": "black",
+        "navigationBarTitleText": "业务管理系统",
+        "navigationBarBackgroundColor": "#ffffff",
         "backgroundColor": "#f5f5f5"
-      }
-    },
-    {
-      "path": "pages/site/index",
-      "style": {
-        "navigationBarTitleText": "踏勘"
-      }
-    },
-    {
-      "path": "pages/construction/index",
-      "style": {
-        "navigationBarTitleText": "施工"
-      }
-    },
-    {
-      "path": "pages/business/index",
-      "style": {
-        "navigationBarTitleText": "营业管理"
-      }
-    },
-    {
-      "path": "pages/business/info",
-      "style": {
-        "navigationBarTitleText": "基础信息录入"
-      }
-    },
-    {
-      "path": "pages/business/customer",
-      "style": {
-        "navigationBarTitleText": "商户信息"
-      }
-    },
-    {
-      "path": "pages/site/status",
-      "style": {
-        "navigationBarTitleText": "现场状态"
-      }
-    },
-    {
-      "path": "pages/construction/info",
-      "style": {
-        "navigationBarTitleText": "施工信息录入"
-      }
     }
-  ],
-  "globalStyle": {
-    "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "业务管理系统",
-    "navigationBarBackgroundColor": "#ffffff",
-    "backgroundColor": "#f5f5f5"
-  }
 }
