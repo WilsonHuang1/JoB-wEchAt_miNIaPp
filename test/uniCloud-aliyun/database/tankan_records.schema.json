@@ -1,0 +1,94 @@
+{
+    "bsonType": "object",
+    "description": "踏勘记录表",
+    "required": ["guishu", "tankanyuan", "mingcheng"],
+    "permission": {
+        ".read": true,
+        ".create": true,
+        ".update": "doc.userId == auth.uid",
+        ".delete": "doc.userId == auth.uid"
+    },
+    "properties": {
+        "_id": {
+            "description": "记录ID，系统自动生成"
+        },
+        "guishu": {
+            "bsonType": "string",
+            "description": "归属公司",
+            "label": "归属"
+        },
+        "tankanyuan": {
+            "bsonType": "string",
+            "description": "踏勘人员姓名",
+            "label": "踏勘人员"
+        },
+        "didian": {
+            "bsonType": "string",
+            "description": "踏勘地点信息",
+            "label": "地点"
+        },
+        "mingcheng": {
+            "bsonType": "string",
+            "description": "踏勘项目名称",
+            "label": "名称"
+        },
+        "qingxifanwei": {
+            "bsonType": "array",
+            "description": "清洗范围选项",
+            "label": "清洗范围",
+            "items": {
+                "bsonType": "string"
+            }
+        },
+        "specDetails": {
+            "bsonType": "object",
+            "description": "各清洗范围的详细规格信息",
+            "label": "规格详情"
+        },
+        "multipleEntries": {
+            "bsonType": "object",
+            "description": "多条目数据（横管竖管）",
+            "label": "多条目数据"
+        },
+        "summaryData": {
+            "bsonType": "object",
+            "description": "汇总统计数据",
+            "label": "汇总数据"
+        },
+        "location": {
+            "bsonType": "object",
+            "description": "GPS位置信息",
+            "properties": {
+                "latitude": {
+                    "bsonType": "double",
+                    "description": "纬度"
+                },
+                "longitude": {
+                    "bsonType": "double",
+                    "description": "经度"
+                },
+                "address": {
+                    "bsonType": "string",
+                    "description": "地址描述"
+                }
+            }
+        },
+        "createTime": {
+            "bsonType": "timestamp",
+            "description": "创建时间",
+            "forceDefaultValue": {
+                "$env": "now"
+            }
+        },
+        "userId": {
+            "bsonType": "string",
+            "description": "创建用户ID"
+        },
+        "status": {
+            "bsonType": "string",
+            "description": "记录状态",
+            "default": "draft",
+            "enum": ["draft", "submitted", "approved", "rejected"]
+        }
+    }
+}

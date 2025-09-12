@@ -1,0 +1,33 @@
+[{
+        "name": "张三",
+        "department": "技术部",
+        "position": "高级工程师",
+        "phone": "13800138001",
+        "email": "zhangsan@company.com",
+        "isActive": true
+    },
+    {
+        "name": "李四",
+        "department": "施工部",
+        "position": "项目经理",
+        "phone": "13800138002",
+        "email": "lisi@company.com",
+        "isActive": true
+    },
+    {
+        "name": "王五",
+        "department": "质检部",
+        "position": "质检员",
+        "phone": "13800138003",
+        "email": "wangwu@company.com",
+        "isActive": true
+    },
+    {
+        "name": "赵六",
+        "department": "技术部",
+        "position": "技术员",
+        "phone": "13800138004",
+        "email": "zhaoliu@company.com",
+        "isActive": true
+    }
+]

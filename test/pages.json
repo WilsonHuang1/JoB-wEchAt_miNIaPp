@@ -53,6 +53,13 @@
             "style": {
                 "navigationBarTitleText": "施工信息录入"
             }
+        },
+        {
+            "path": "pages/site/preview",
+            "style": {
+                "navigationBarTitleText": "信息确认",
+                "navigationStyle": "custom"
+            }
         }
     ],
     "globalStyle": {

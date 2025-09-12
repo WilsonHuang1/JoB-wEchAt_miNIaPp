@@ -1,0 +1,46 @@
+{
+    "bsonType": "object",
+    "description": "工作人员信息表",
+    "required": ["name", "department"],
+    "permission": {
+        ".read": true,
+        ".create": "auth.role.includes('admin')",
+        ".update": "auth.role.includes('admin')",
+        ".delete": "auth.role.includes('admin')"
+    },
+    "properties": {
+        "_id": {
+            "description": "人员ID，系统自动生成"
+        },
+        "name": {
+            "bsonType": "string",
+            "description": "人员姓名",
+            "label": "姓名"
+        },
+        "department": {
+            "bsonType": "string",
+            "description": "所属部门",
+            "label": "部门"
+        },
+        "position": {
+            "bsonType": "string",
+            "description": "职位",
+            "label": "职位"
+        },
+        "phone": {
+            "bsonType": "string",
+            "description": "联系电话",
+            "label": "电话"
+        },
+        "email": {
+            "bsonType": "string",
+            "description": "邮箱地址",
+            "label": "邮箱"
+        },
+        "isActive": {
+            "bsonType": "bool",
+            "description": "是否在职",
+            "default": true
+        }
+    }
+}

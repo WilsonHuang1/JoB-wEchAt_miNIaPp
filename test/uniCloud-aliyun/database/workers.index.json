@@ -1,0 +1,16 @@
+[{
+    "IndexName": "department_name",
+    "MgoKeySchema": {
+        "MgoIndexKeys": [{
+                "Name": "department",
+                "Direction": "1"
+            },
+            {
+                "Name": "name",
+                "Direction": "1"
+            }
+        ],
+        "MgoIsUnique": false,
+        "MgoIsSparse": false
+    }
+}]
