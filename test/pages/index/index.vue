@@ -25,8 +25,8 @@
                 </view>
 
                 <view class="tab-item construction" @click="goToConstruction">
-                    <view class="tab-icon">🔨</view>
-                    <text class="tab-title">施工</text>
+                    <view class="tab-icon">🧯</view>
+                    <text class="tab-title">清洗</text>
                     <text class="tab-desc">施工进度管理</text>
                 </view>
 
