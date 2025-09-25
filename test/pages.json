@@ -15,7 +15,7 @@
         {
             "path": "pages/construction/index",
             "style": {
-                "navigationBarTitleText": "清洗"
+                "navigationBarTitleText": "清洗记录"
             }
         },
         {
