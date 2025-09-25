@@ -66,57 +66,63 @@
                         <view class="section-subtitle">清洗前状态拍照</view>
 
                         <!-- Photo upload for selected options -->
-                        <view class="selected-options" v-if="beforeCleaningSelected.length > 0">
-                            <view class="selected-option" v-for="option in beforeCleaningSelected" :key="option">
-                                <text class="option-label">{{ getOptionLabel(option) }}</text>
+                        <view class="selected-options" v-if="selectedCleaningItems.length > 0">
+                            <view class="selected-option" v-for="item in selectedCleaningItems" :key="item.id">
+                                <view class="option-header">
+                                    <text class="option-label">{{ item.label }}</text>
+                                    <button class="remove-btn" @click="removeCleaningItem(item.id)">移除</button>
+                                </view>
 
                                 <!-- Sub-options selection for this area -->
                                 <view class="sub-options-section">
-                                    <text class="sub-options-title">选择{{ getOptionLabel(option) }}具体部位</text>
+                                    <text class="sub-options-title">选择{{ item.label }}具体部位</text>
                                     <view class="sub-option-grid">
-                                        <view class="sub-option-item" v-for="subOption in getSubOptionsForArea(option)"
-                                            :key="subOption.value"
-                                            :class="{ selected: isSubOptionSelected(option, subOption.value) }"
-                                            @click="toggleSubOption(option, subOption.value)">
+                                        <view class="sub-option-item"
+                                            v-for="subOption in getSubOptionsForArea(item.value)" :key="subOption.value"
+                                            :class="{ selected: isSubOptionSelected(item.id, subOption.value) }"
+                                            @click="toggleSubOption(item.id, subOption.value)">
                                             <text class="sub-option-text">{{ subOption.label }}</text>
                                             <view class="sub-option-checkbox"
-                                                v-if="isSubOptionSelected(option, subOption.value)">✓</view>
+                                                v-if="isSubOptionSelected(item.id, subOption.value)">✓</view>
                                         </view>
                                     </view>
                                 </view>
 
-                                <!-- Custom sub-option input -->
-                                <view class="form-group" style="margin-top: 20rpx;">
-                                    <text class="label">其他具体部位</text>
-                                    <input class="input" :value="customSubOptions[option] || ''"
-                                        @input="updateCustomSubOption(option, $event)" placeholder="请输入其他具体部位" />
-                                    <button class="add-custom-btn" @click="addCustomSubOption(option)"
-                                        v-if="customSubOptions[option] && customSubOptions[option].trim()">添加</button>
+                                <!-- Photo upload for custom options (其他部位) -->
+                                <view class="custom-photo-section" v-if="item.value.startsWith('custom_')">
+                                    <text class="sub-photo-label">{{ item.label }} 清洗前照片</text>
+                                    <view class="photo-upload-area"
+                                        @click="uploadCustomOptionPhotos('before', item.value)">
+                                        <text>点击上传 {{ item.label }} 清洗前照片</text>
+                                        <text class="photo-count" v-if="getCustomPhotoCount('before', item.value)">
+                                            已上传 {{ getCustomPhotoCount('before', item.value) }} 张
+                                        </text>
+                                    </view>
+                                </view>
+
+                                <!-- Photo upload for selected sub-options -->
+                                <view class="sub-photos-section" v-if="getSelectedSubOptions(item.id).length > 0">
+                                    <view class="sub-photo-item" v-for="subOption in getSelectedSubOptions(item.id)"
+                                        :key="subOption">
+                                        <text class="sub-photo-label">{{ getSubOptionLabel(item.value, subOption) }}
+                                            照片</text>
+                                        <view class="photo-upload-area"
+                                            @click="uploadDetailedPhotos('before', item.id, subOption)">
+                                            <text>点击上传 {{ getSubOptionLabel(item.value, subOption) }} 清洗前照片</text>
+                                            <text class="photo-count"
+                                                v-if="getDetailedPhotoCount('before', item.id, subOption)">
+                                                已上传 {{ getDetailedPhotoCount('before', item.id, subOption) }} 张
+                                            </text>
+                                        </view>
+                                    </view>
                                 </view>
 
                                 <!-- Side notes -->
                                 <view class="form-group" style="margin-top: 20rpx;">
-                                    <text class="label">{{ getOptionLabel(option) }} 其他备注</text>
-                                    <textarea class="textarea" :value="sideNotes[option] || ''"
-                                        @input="updateSideNotes(option, $event)" placeholder="请输入其他备注信息"
+                                    <text class="label">{{ item.label }} 其他备注</text>
+                                    <textarea class="textarea small-textarea" :value="sideNotes[item.id] || ''"
+                                        @input="updateSideNotes(item.id, $event)" placeholder="请输入其他备注信息"
                                         rows="3"></textarea>
-                                </view>
-
-                                <!-- Photo upload for selected sub-options -->
-                                <view class="sub-photos-section" v-if="getSelectedSubOptions(option).length > 0">
-                                    <view class="sub-photo-item" v-for="subOption in getSelectedSubOptions(option)"
-                                        :key="subOption">
-                                        <text class="sub-photo-label">{{ getSubOptionLabel(option, subOption) }}
-                                            照片</text>
-                                        <view class="photo-upload-area"
-                                            @click="uploadDetailedPhotos('before', option, subOption)">
-                                            <text>点击上传 {{ getSubOptionLabel(option, subOption) }} 清洗前照片</text>
-                                            <text class="photo-count"
-                                                v-if="getDetailedPhotoCount('before', option, subOption)">
-                                                已上传 {{ getDetailedPhotoCount('before', option, subOption) }} 张
-                                            </text>
-                                        </view>
-                                    </view>
                                 </view>
                             </view>
                         </view>
@@ -126,11 +132,8 @@
                             <text class="options-title">选择清洗部位</text>
                             <view class="option-grid">
                                 <view class="option-item" v-for="option in cleaningOptions" :key="option.value"
-                                    :class="{ selected: beforeCleaningSelected.includes(option.value) }"
-                                    @click="toggleBeforeCleaningOption(option.value)">
+                                    @click="addCleaningOption(option.value)">
                                     <text class="option-text">{{ option.label }}</text>
-                                    <view class="option-checkbox" v-if="beforeCleaningSelected.includes(option.value)">✓
-                                    </view>
                                 </view>
                             </view>
                         </view>
@@ -138,7 +141,7 @@
                         <!-- Custom main option input -->
                         <view class="form-group" style="margin-top: 30rpx;">
                             <text class="label">其他部位</text>
-                            <input class="input" v-model="customBeforeOption" placeholder="请输入其他需要清洗的部位" />
+                            <input class="input tall-input" v-model="customBeforeOption" placeholder="请输入其他需要清洗的部位" />
                             <button class="add-custom-btn" @click="addCustomBeforeOption"
                                 v-if="customBeforeOption.trim()">添加</button>
                         </view>
@@ -162,29 +165,41 @@
                         </view>
 
                         <!-- Photo upload for the same options selected in before cleaning -->
-                        <view class="selected-options" v-if="beforeCleaningSelected.length > 0">
-                            <view class="selected-option" v-for="option in beforeCleaningSelected" :key="option">
-                                <text class="option-label">{{ getOptionLabel(option) }} 清洗后照片</text>
+                        <view class="selected-options" v-if="selectedCleaningItems.length > 0">
+                            <view class="selected-option" v-for="item in selectedCleaningItems" :key="item.id">
+                                <text class="option-label">{{ item.label }} 清洗后照片</text>
 
                                 <!-- Side notes display (read-only) -->
-                                <view class="form-group" v-if="sideNotes[option] && sideNotes[option].trim()"
+                                <view class="form-group" v-if="sideNotes[item.id] && sideNotes[item.id].trim()"
                                     style="margin-bottom: 20rpx;">
                                     <text class="label">备注信息</text>
-                                    <view class="notes-display">{{ sideNotes[option] }}</view>
+                                    <view class="notes-display">{{ sideNotes[item.id] }}</view>
+                                </view>
+
+                                <!-- Photo upload for custom options in after cleaning -->
+                                <view class="custom-photo-section" v-if="item.value.startsWith('custom_')">
+                                    <text class="sub-photo-label">{{ item.label }} 清洗后照片</text>
+                                    <view class="photo-upload-area"
+                                        @click="uploadCustomOptionPhotos('after', item.value)">
+                                        <text>点击上传 {{ item.label }} 清洗后照片</text>
+                                        <text class="photo-count" v-if="getCustomPhotoCount('after', item.value)">
+                                            已上传 {{ getCustomPhotoCount('after', item.value) }} 张
+                                        </text>
+                                    </view>
                                 </view>
 
                                 <!-- Photo upload for selected sub-options (based on before cleaning) -->
-                                <view class="sub-photos-section" v-if="getSelectedSubOptions(option).length > 0">
-                                    <view class="sub-photo-item" v-for="subOption in getSelectedSubOptions(option)"
+                                <view class="sub-photos-section" v-if="getSelectedSubOptions(item.id).length > 0">
+                                    <view class="sub-photo-item" v-for="subOption in getSelectedSubOptions(item.id)"
                                         :key="subOption">
-                                        <text class="sub-photo-label">{{ getSubOptionLabel(option, subOption) }}
+                                        <text class="sub-photo-label">{{ getSubOptionLabel(item.value, subOption) }}
                                             清洗后照片</text>
                                         <view class="photo-upload-area"
-                                            @click="uploadDetailedPhotos('after', option, subOption)">
-                                            <text>点击上传 {{ getSubOptionLabel(option, subOption) }} 清洗后照片</text>
+                                            @click="uploadDetailedPhotos('after', item.id, subOption)">
+                                            <text>点击上传 {{ getSubOptionLabel(item.value, subOption) }} 清洗后照片</text>
                                             <text class="photo-count"
-                                                v-if="getDetailedPhotoCount('after', option, subOption)">
-                                                已上传 {{ getDetailedPhotoCount('after', option, subOption) }} 张
+                                                v-if="getDetailedPhotoCount('after', item.id, subOption)">
+                                                已上传 {{ getDetailedPhotoCount('after', item.id, subOption) }} 张
                                             </text>
                                         </view>
                                     </view>
@@ -334,25 +349,24 @@
                     ]
                 },
 
-                // Selected options for before and after
-                beforeCleaningSelected: [],
+                // Photos for custom options (其他部位)
+                customOptionPhotos: {
+                    before: {}, // { custom_123456: [photo1, photo2] }
+                    after: {}
+                },
+
+                // Selected cleaning items - now supports multiple of same type
+                selectedCleaningItems: [], // Array of objects: [{id: unique_id, value: 'kitchen', label: '厨房'}]
                 customBeforeOption: '',
 
-                // Selected sub-options for each area
-                selectedSubOptions: {}, // { kitchen: ['environment', 'stove'], pipe: ['pipe_leak'] }
+                // Selected sub-options for each item (using unique IDs)
+                selectedSubOptions: {}, // { item_id: ['environment', 'stove'] }
 
-                // Custom sub-options input
-                customSubOptions: {}, // { kitchen: 'custom text', pipe: 'custom text' }
+                // Side notes for each item (using unique IDs)
+                sideNotes: {}, // { item_id: 'some notes' }
 
-                // Side notes for each area
-                sideNotes: {}, // { kitchen: 'some notes', pipe: 'other notes' }
-
-                // Photos organized by type and option
-                beforePhotos: {}, // Keep for backward compatibility
-                afterPhotos: {}, // Keep for backward compatibility
-
-                // Detailed photos organized by area and sub-option
-                detailedBeforePhotos: {}, // { kitchen: { environment: [photos], stove: [photos] } }
+                // Detailed photos organized by item ID and sub-option
+                detailedBeforePhotos: {}, // { item_id: { environment: [photos], stove: [photos] } }
                 detailedAfterPhotos: {},
 
                 workPhotos: [],
@@ -366,7 +380,10 @@
         },
 
         onLoad() {
-            // Load any saved data
+            // TEMPORARY: Clear data on each load during development
+            uni.removeStorageSync('cleaningData');
+
+            // Load any saved data (should be empty now)
             this.loadSavedData();
         },
 
@@ -390,27 +407,35 @@
                 this.currentStep = step;
             },
 
-            // Toggle before cleaning option selection
-            toggleBeforeCleaningOption(value) {
-                const index = this.beforeCleaningSelected.indexOf(value);
+            // Add cleaning option (allows multiple of same type)
+            addCleaningOption(value) {
+                const uniqueId = Date.now() + '_' + Math.random();
+                const option = this.cleaningOptions.find(opt => opt.value === value);
+
+                const newItem = {
+                    id: uniqueId,
+                    value: value,
+                    label: option.label
+                };
+
+                this.selectedCleaningItems.push(newItem);
+
+                // Initialize arrays for this specific item
+                this.$set(this.selectedSubOptions, uniqueId, []);
+                this.$set(this.detailedBeforePhotos, uniqueId, {});
+                this.$set(this.detailedAfterPhotos, uniqueId, {});
+                this.$set(this.sideNotes, uniqueId, '');
+            },
+
+            // Remove cleaning item
+            removeCleaningItem(itemId) {
+                const index = this.selectedCleaningItems.findIndex(item => item.id === itemId);
                 if (index > -1) {
-                    this.beforeCleaningSelected.splice(index, 1);
-                    // Remove photos and sub-options for this option
-                    delete this.beforePhotos[value];
-                    delete this.afterPhotos[value];
-                    delete this.selectedSubOptions[value];
-                    delete this.detailedBeforePhotos[value];
-                    delete this.detailedAfterPhotos[value];
-                    delete this.sideNotes[value];
-                } else {
-                    this.beforeCleaningSelected.push(value);
-                    // Initialize photo arrays and sub-options
-                    this.$set(this.beforePhotos, value, []);
-                    this.$set(this.afterPhotos, value, []);
-                    this.$set(this.selectedSubOptions, value, []);
-                    this.$set(this.detailedBeforePhotos, value, {});
-                    this.$set(this.detailedAfterPhotos, value, {});
-                    this.$set(this.sideNotes, value, '');
+                    this.selectedCleaningItems.splice(index, 1);
+                    delete this.selectedSubOptions[itemId];
+                    delete this.detailedBeforePhotos[itemId];
+                    delete this.detailedAfterPhotos[itemId];
+                    delete this.sideNotes[itemId];
                 }
             },
 
@@ -422,21 +447,13 @@
                         value: customValue,
                         label: this.customBeforeOption.trim()
                     });
-                    this.beforeCleaningSelected.push(customValue);
-                    this.$set(this.beforePhotos, customValue, []);
-                    this.$set(this.afterPhotos, customValue, []);
-                    this.$set(this.selectedSubOptions, customValue, []);
-                    this.$set(this.detailedBeforePhotos, customValue, {});
-                    this.$set(this.detailedAfterPhotos, customValue, {});
-                    this.$set(this.sideNotes, customValue, '');
-                    this.customBeforeOption = '';
-                }
-            },
 
-            // Get option label by value
-            getOptionLabel(value) {
-                const option = this.cleaningOptions.find(opt => opt.value === value);
-                return option ? option.label : value;
+                    // Add the custom option as a selected item
+                    this.addCleaningOption(customValue);
+                    this.customBeforeOption = '';
+                    this.$set(this.customOptionPhotos.before, customValue, []);
+                    this.$set(this.customOptionPhotos.after, customValue, []);
+                }
             },
 
             // Get sub-options for a specific area
@@ -445,89 +462,48 @@
             },
 
             // Check if sub-option is selected
-            isSubOptionSelected(area, subOption) {
-                return this.selectedSubOptions[area] && this.selectedSubOptions[area].includes(subOption);
+            isSubOptionSelected(itemId, subOption) {
+                return this.selectedSubOptions[itemId] && this.selectedSubOptions[itemId].includes(subOption);
             },
 
             // Toggle sub-option selection
-            toggleSubOption(area, subOption) {
-                if (!this.selectedSubOptions[area]) {
-                    this.$set(this.selectedSubOptions, area, []);
+            toggleSubOption(itemId, subOption) {
+                if (!this.selectedSubOptions[itemId]) {
+                    this.$set(this.selectedSubOptions, itemId, []);
                 }
 
-                const index = this.selectedSubOptions[area].indexOf(subOption);
+                const index = this.selectedSubOptions[itemId].indexOf(subOption);
                 if (index > -1) {
-                    this.selectedSubOptions[area].splice(index, 1);
+                    this.selectedSubOptions[itemId].splice(index, 1);
                     // Remove photos for this sub-option
-                    if (this.detailedBeforePhotos[area]) {
-                        delete this.detailedBeforePhotos[area][subOption];
+                    if (this.detailedBeforePhotos[itemId]) {
+                        delete this.detailedBeforePhotos[itemId][subOption];
                     }
-                    if (this.detailedAfterPhotos[area]) {
-                        delete this.detailedAfterPhotos[area][subOption];
+                    if (this.detailedAfterPhotos[itemId]) {
+                        delete this.detailedAfterPhotos[itemId][subOption];
                     }
                 } else {
-                    this.selectedSubOptions[area].push(subOption);
+                    this.selectedSubOptions[itemId].push(subOption);
                     // Initialize photo storage
-                    if (!this.detailedBeforePhotos[area]) {
-                        this.$set(this.detailedBeforePhotos, area, {});
+                    if (!this.detailedBeforePhotos[itemId]) {
+                        this.$set(this.detailedBeforePhotos, itemId, {});
                     }
-                    if (!this.detailedAfterPhotos[area]) {
-                        this.$set(this.detailedAfterPhotos, area, {});
+                    if (!this.detailedAfterPhotos[itemId]) {
+                        this.$set(this.detailedAfterPhotos, itemId, {});
                     }
-                    this.$set(this.detailedBeforePhotos[area], subOption, []);
-                    this.$set(this.detailedAfterPhotos[area], subOption, []);
+                    this.$set(this.detailedBeforePhotos[itemId], subOption, []);
+                    this.$set(this.detailedAfterPhotos[itemId], subOption, []);
                 }
-            },
-
-            // Update custom sub-option input
-            updateCustomSubOption(area, event) {
-                this.$set(this.customSubOptions, area, event.detail.value);
             },
 
             // Update side notes
-            updateSideNotes(area, event) {
-                this.$set(this.sideNotes, area, event.detail.value);
+            updateSideNotes(itemId, event) {
+                this.$set(this.sideNotes, itemId, event.detail.value);
             },
 
-            // Add custom sub-option
-            addCustomSubOption(area) {
-                const customText = this.customSubOptions[area];
-                if (customText && customText.trim()) {
-                    const customValue = 'custom_' + Date.now();
-
-                    // Add to sub-options list
-                    if (!this.cleaningSubOptions[area]) {
-                        this.$set(this.cleaningSubOptions, area, []);
-                    }
-                    this.cleaningSubOptions[area].push({
-                        value: customValue,
-                        label: customText.trim()
-                    });
-
-                    // Select it automatically
-                    if (!this.selectedSubOptions[area]) {
-                        this.$set(this.selectedSubOptions, area, []);
-                    }
-                    this.selectedSubOptions[area].push(customValue);
-
-                    // Initialize photo storage
-                    if (!this.detailedBeforePhotos[area]) {
-                        this.$set(this.detailedBeforePhotos, area, {});
-                    }
-                    if (!this.detailedAfterPhotos[area]) {
-                        this.$set(this.detailedAfterPhotos, area, {});
-                    }
-                    this.$set(this.detailedBeforePhotos[area], customValue, []);
-                    this.$set(this.detailedAfterPhotos[area], customValue, []);
-
-                    // Clear input
-                    this.$set(this.customSubOptions, area, '');
-                }
-            },
-
-            // Get selected sub-options for an area
-            getSelectedSubOptions(area) {
-                return this.selectedSubOptions[area] || [];
+            // Get selected sub-options for an item
+            getSelectedSubOptions(itemId) {
+                return this.selectedSubOptions[itemId] || [];
             },
 
             // Get sub-option label
@@ -538,22 +514,22 @@
             },
 
             // Upload detailed photos
-            uploadDetailedPhotos(type, area, subOption) {
-                console.log(`Upload ${type} photos for ${area} - ${subOption}`);
+            uploadDetailedPhotos(type, itemId, subOption) {
+                console.log(`Upload ${type} photos for ${itemId} - ${subOption}`);
                 uni.chooseImage({
                     count: 9,
                     success: (res) => {
                         const photosObj = type === 'before' ? this.detailedBeforePhotos : this
                             .detailedAfterPhotos;
 
-                        if (!photosObj[area]) {
-                            this.$set(photosObj, area, {});
+                        if (!photosObj[itemId]) {
+                            this.$set(photosObj, itemId, {});
                         }
-                        if (!photosObj[area][subOption]) {
-                            this.$set(photosObj[area], subOption, []);
+                        if (!photosObj[itemId][subOption]) {
+                            this.$set(photosObj[itemId], subOption, []);
                         }
 
-                        photosObj[area][subOption].push(...res.tempFilePaths);
+                        photosObj[itemId][subOption].push(...res.tempFilePaths);
 
                         uni.showToast({
                             title: `已选择 ${res.tempFilePaths.length} 张照片`,
@@ -571,9 +547,45 @@
             },
 
             // Get detailed photo count
-            getDetailedPhotoCount(type, area, subOption) {
+            getDetailedPhotoCount(type, itemId, subOption) {
                 const photosObj = type === 'before' ? this.detailedBeforePhotos : this.detailedAfterPhotos;
-                return photosObj[area] && photosObj[area][subOption] ? photosObj[area][subOption].length : 0;
+                return photosObj[itemId] && photosObj[itemId][subOption] ? photosObj[itemId][subOption].length : 0;
+            },
+
+            // Upload photos for custom options (其他部位)
+            uploadCustomOptionPhotos(type, option) {
+                console.log(`Upload ${type} photos for custom option ${option}`);
+                uni.chooseImage({
+                    count: 9,
+                    success: (res) => {
+                        if (!this.customOptionPhotos[type]) {
+                            this.$set(this.customOptionPhotos, type, {});
+                        }
+                        if (!this.customOptionPhotos[type][option]) {
+                            this.$set(this.customOptionPhotos[type], option, []);
+                        }
+
+                        this.customOptionPhotos[type][option].push(...res.tempFilePaths);
+
+                        uni.showToast({
+                            title: `已选择 ${res.tempFilePaths.length} 张照片`,
+                            icon: 'success'
+                        });
+                    },
+                    fail: (err) => {
+                        console.error('选择图片失败:', err);
+                        uni.showToast({
+                            title: '选择图片失败',
+                            icon: 'error'
+                        });
+                    }
+                });
+            },
+
+            // Get photo count for custom options
+            getCustomPhotoCount(type, option) {
+                return this.customOptionPhotos[type] && this.customOptionPhotos[type][option] ?
+                    this.customOptionPhotos[type][option].length : 0;
             },
 
             // Upload work photos
@@ -601,10 +613,15 @@
 
             // Check if after cleaning is complete
             isAfterCleaningComplete() {
-                return this.beforeCleaningSelected.every(area => {
-                    const selectedSubs = this.getSelectedSubOptions(area);
+                return this.selectedCleaningItems.every(item => {
+                    // For custom options, check if they have after photos
+                    if (item.value.startsWith('custom_')) {
+                        return this.getCustomPhotoCount('after', item.value) > 0;
+                    }
+                    // For regular options, check sub-options and their photos
+                    const selectedSubs = this.getSelectedSubOptions(item.id);
                     return selectedSubs.every(subOption => {
-                        return this.getDetailedPhotoCount('after', area, subOption) > 0;
+                        return this.getDetailedPhotoCount('after', item.id, subOption) > 0;
                     });
                 });
             },
@@ -613,11 +630,16 @@
             isStepCompleted(step) {
                 switch (step) {
                     case 'beforeCleaning':
-                        return this.beforeCleaningSelected.length > 0 &&
-                            this.beforeCleaningSelected.every(area => {
-                                const selectedSubs = this.getSelectedSubOptions(area);
+                        return this.selectedCleaningItems.length > 0 &&
+                            this.selectedCleaningItems.every(item => {
+                                // For custom options, check if they have photos
+                                if (item.value.startsWith('custom_')) {
+                                    return this.getCustomPhotoCount('before', item.value) > 0;
+                                }
+                                // For regular options, check sub-options and their photos
+                                const selectedSubs = this.getSelectedSubOptions(item.id);
                                 return selectedSubs.length > 0 && selectedSubs.every(subOption => {
-                                    return this.getDetailedPhotoCount('before', area, subOption) > 0;
+                                    return this.getDetailedPhotoCount('before', item.id, subOption) > 0;
                                 });
                             });
                     case 'afterCleaning':
@@ -634,7 +656,7 @@
             // Save cleaning record
             saveCleaningRecord() {
                 const cleaningData = {
-                    beforeCleaningSelected: this.beforeCleaningSelected,
+                    selectedCleaningItems: this.selectedCleaningItems,
                     selectedSubOptions: this.selectedSubOptions,
                     sideNotes: this.sideNotes,
                     detailedBeforePhotos: this.detailedBeforePhotos,
@@ -642,20 +664,37 @@
                     workPhotos: this.workPhotos,
                     environmentNotes: this.environmentNotes,
                     customOptions: this.cleaningOptions.filter(opt => opt.value.startsWith('custom_')),
-                    customSubOptions: Object.keys(this.cleaningSubOptions).reduce((acc, area) => {
-                        const customSubs = this.cleaningSubOptions[area].filter(sub => sub.value.startsWith(
-                            'custom_'));
-                        if (customSubs.length > 0) {
-                            acc[area] = customSubs;
-                        }
-                        return acc;
-                    }, {}),
+                    customOptionPhotos: this.customOptionPhotos,
                     timestamp: new Date().toISOString(),
                     worker: this.userInfo.name,
                     company: this.userInfo.company
                 };
 
-                uni.setStorageSync('cleaningData', cleaningData);
+                // TODO: Send cleaningData to cloud/server here
+                // await uploadToCloud(cleaningData);
+
+                // Clear all local storage and form data
+                uni.removeStorageSync('cleaningData');
+
+                // Reset all form data to initial state
+                this.selectedCleaningItems = [];
+                this.selectedSubOptions = {};
+                this.sideNotes = {};
+                this.detailedBeforePhotos = {};
+                this.detailedAfterPhotos = {};
+                this.workPhotos = [];
+                this.environmentNotes = '';
+                this.customOptionPhotos = {
+                    before: {},
+                    after: {}
+                };
+
+                // Reset to first step
+                this.currentStep = 'beforeCleaning';
+
+                // Remove custom options from cleaningOptions array
+                this.cleaningOptions = this.cleaningOptions.filter(opt => !opt.value.startsWith('custom_'));
+
                 uni.showToast({
                     title: '清洗记录保存成功',
                     icon: 'success'
@@ -671,7 +710,7 @@
                 try {
                     const savedData = uni.getStorageSync('cleaningData');
                     if (savedData) {
-                        this.beforeCleaningSelected = savedData.beforeCleaningSelected || [];
+                        this.selectedCleaningItems = savedData.selectedCleaningItems || [];
                         this.selectedSubOptions = savedData.selectedSubOptions || {};
                         this.sideNotes = savedData.sideNotes || {};
                         this.detailedBeforePhotos = savedData.detailedBeforePhotos || {};
@@ -682,15 +721,6 @@
                         // Restore custom options
                         if (savedData.customOptions) {
                             this.cleaningOptions.push(...savedData.customOptions);
-                        }
-
-                        // Restore custom sub-options
-                        if (savedData.customSubOptions) {
-                            Object.keys(savedData.customSubOptions).forEach(area => {
-                                if (this.cleaningSubOptions[area]) {
-                                    this.cleaningSubOptions[area].push(...savedData.customSubOptions[area]);
-                                }
-                            });
                         }
                     }
                 } catch (error) {
@@ -981,7 +1011,7 @@
         cursor: pointer;
         transition: all 0.3s ease;
 
-        &.selected {
+        &:hover {
             border-color: #007AFF;
             background-color: #f0f8ff;
         }
@@ -994,21 +1024,6 @@
     .option-text {
         font-size: 28rpx;
         color: #333;
-    }
-
-    .option-checkbox {
-        position: absolute;
-        top: -8rpx;
-        right: -8rpx;
-        background-color: #007AFF;
-        color: white;
-        border-radius: 50%;
-        width: 30rpx;
-        height: 30rpx;
-        font-size: 18rpx;
-        display: flex;
-        align-items: center;
-        justify-content: center;
     }
 
     .sub-options-section {
@@ -1119,6 +1134,16 @@
         resize: none;
     }
 
+    .tall-input {
+        min-height: 80rpx;
+        height: 80rpx;
+    }
+
+    .small-textarea {
+        min-height: 60rpx;
+        height: 60rpx;
+    }
+
     .notes-display {
         padding: 20rpx;
         background-color: #f9f9f9;
@@ -1156,17 +1181,38 @@
         background-color: #fafafa;
     }
 
+    .option-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20rpx;
+    }
+
     .option-label {
         display: block;
         font-size: 32rpx;
         font-weight: bold;
-        color: #333;
-        margin-bottom: 20rpx;
-        text-align: center;
-        background-color: #007AFF;
         color: white;
         padding: 15rpx;
         border-radius: 8rpx;
+        background-color: #007AFF;
+        flex: 1;
+        text-align: center;
+    }
+
+    .remove-btn {
+        padding: 10rpx 20rpx;
+        background-color: #ff4444;
+        color: white;
+        border: none;
+        border-radius: 6rpx;
+        font-size: 22rpx;
+        margin-left: 15rpx;
+        cursor: pointer;
+
+        &:active {
+            background-color: #cc0000;
+        }
     }
 
     .photo-upload-area {
