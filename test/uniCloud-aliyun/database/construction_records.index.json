@@ -1,0 +1,44 @@
+[{
+        "IndexName": "userId_createTime",
+        "MgoKeySchema": {
+            "MgoIndexKeys": [{
+                    "Name": "userId",
+                    "Direction": "1"
+                },
+                {
+                    "Name": "createTime",
+                    "Direction": "-1"
+                }
+            ],
+            "MgoIsUnique": false,
+            "MgoIsSparse": false
+        }
+    },
+    {
+        "IndexName": "status_createTime",
+        "MgoKeySchema": {
+            "MgoIndexKeys": [{
+                    "Name": "status",
+                    "Direction": "1"
+                },
+                {
+                    "Name": "createTime",
+                    "Direction": "-1"
+                }
+            ],
+            "MgoIsUnique": false,
+            "MgoIsSparse": false
+        }
+    },
+    {
+        "IndexName": "relatedInspectionId",
+        "MgoKeySchema": {
+            "MgoIndexKeys": [{
+                "Name": "relatedInspectionId",
+                "Direction": "1"
+            }],
+            "MgoIsUnique": false,
+            "MgoIsSparse": true
+        }
+    }
+]

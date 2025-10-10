@@ -1,0 +1,137 @@
+{
+    "bsonType": "object",
+    "description": "清洗工作记录表",
+    "required": ["cleaningAreas", "userId"],
+    "permission": {
+        ".read": true,
+        ".create": true,
+        ".update": "doc.userId == auth.uid",
+        ".delete": "doc.userId == auth.uid"
+    },
+    "properties": {
+        "_id": {
+            "description": "记录ID，系统自动生成"
+        },
+        "projectName": {
+            "bsonType": "string",
+            "description": "项目名称",
+            "label": "项目名称"
+        },
+        "projectLocation": {
+            "bsonType": "string",
+            "description": "项目地点",
+            "label": "项目地点"
+        },
+        "cleaningDate": {
+            "bsonType": "timestamp",
+            "description": "清洗日期",
+            "label": "清洗日期"
+        },
+        "cleaningAreas": {
+            "bsonType": "array",
+            "description": "清洗区域列表",
+            "label": "清洗区域",
+            "items": {
+                "bsonType": "string"
+            }
+        },
+        "selectedSubOptions": {
+            "bsonType": "object",
+            "description": "每个区域选择的子选项",
+            "label": "子选项",
+            "comment": "格式: { kitchen: ['environment', 'stove'], pipe: ['pipe_leak'] }"
+        },
+        "customSubOptions": {
+            "bsonType": "object",
+            "description": "自定义子选项文本",
+            "label": "自定义子选项",
+            "comment": "格式: { kitchen: 'custom text', pipe: 'other text' }"
+        },
+        "sideNotes": {
+            "bsonType": "object",
+            "description": "每个区域的备注信息",
+            "label": "备注",
+            "comment": "格式: { kitchen: 'some notes', pipe: 'other notes' }"
+        },
+        "detailedBeforePhotos": {
+            "bsonType": "object",
+            "description": "清洗前详细照片，按区域和子选项分组",
+            "label": "清洗前照片",
+            "comment": "格式: { kitchen: { environment: [photo_urls], stove: [photo_urls] } }"
+        },
+        "detailedAfterPhotos": {
+            "bsonType": "object",
+            "description": "清洗后详细照片，按区域和子选项分组",
+            "label": "清洗后照片",
+            "comment": "格式: { kitchen: { environment: [photo_urls], stove: [photo_urls] } }"
+        },
+        "workPhotos": {
+            "bsonType": "array",
+            "description": "工作过程照片",
+            "label": "工作照片",
+            "items": {
+                "bsonType": "string"
+            }
+        },
+        "environmentNotes": {
+            "bsonType": "string",
+            "description": "环境备注信息",
+            "label": "环境备注"
+        },
+        "workerName": {
+            "bsonType": "string",
+            "description": "施工人员姓名",
+            "label": "施工人员"
+        },
+        "workerCompany": {
+            "bsonType": "string",
+            "description": "施工单位",
+            "label": "施工单位"
+        },
+        "location": {
+            "bsonType": "object",
+            "description": "GPS位置信息",
+            "properties": {
+                "latitude": {
+                    "bsonType": "double",
+                    "description": "纬度"
+                },
+                "longitude": {
+                    "bsonType": "double",
+                    "description": "经度"
+                },
+                "address": {
+                    "bsonType": "string",
+                    "description": "地址描述"
+                }
+            }
+        },
+        "createTime": {
+            "bsonType": "timestamp",
+            "description": "创建时间",
+            "forceDefaultValue": {
+                "$env": "now"
+            }
+        },
+        "updateTime": {
+            "bsonType": "timestamp",
+            "description": "更新时间"
+        },
+        "userId": {
+            "bsonType": "string",
+            "description": "创建用户ID"
+        },
+        "status": {
+            "bsonType": "string",
+            "description": "记录状态",
+            "default": "draft",
+            "enum": ["draft", "submitted", "completed", "verified"]
+        },
+        "relatedInspectionId": {
+            "bsonType": "string",
+            "description": "关联的踏勘记录ID",
+            "label": "关联踏勘",
+            "comment": "如果这次清洗工作是基于某次踏勘，记录其ID"
+        }
+    }
+}

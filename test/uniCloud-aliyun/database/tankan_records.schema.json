@@ -40,6 +40,48 @@
                 "bsonType": "string"
             }
         },
+        "environmentData": {
+            "bsonType": "object",
+            "description": "环境信息",
+            "label": "环境信息",
+            "properties": {
+                "parkingEntrance": {
+                    "bsonType": "string",
+                    "description": "停车场入口及价格",
+                    "label": "停车场入口"
+                },
+                "recommendedParking": {
+                    "bsonType": "string",
+                    "description": "建议停车位",
+                    "label": "建议停车位"
+                },
+                "elevatorEntrance": {
+                    "bsonType": "string",
+                    "description": "电梯入口",
+                    "label": "电梯入口"
+                },
+                "recommendedRoute": {
+                    "bsonType": "string",
+                    "description": "建议路线",
+                    "label": "建议路线"
+                },
+                "rooftopEnvironment": {
+                    "bsonType": "string",
+                    "description": "楼顶施工环境",
+                    "label": "楼顶环境"
+                },
+                "waterElectricity": {
+                    "bsonType": "string",
+                    "description": "取水电情况",
+                    "label": "水电情况"
+                },
+                "otherConditions": {
+                    "bsonType": "string",
+                    "description": "其他情况",
+                    "label": "其他情况"
+                }
+            }
+        },
         "specDetails": {
             "bsonType": "object",
             "description": "各清洗范围的详细规格信息",

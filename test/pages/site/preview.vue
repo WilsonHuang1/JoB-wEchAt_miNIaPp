@@ -120,6 +120,7 @@
                         didian: this.formData.didian,
                         mingcheng: this.formData.mingcheng,
                         qingxifanwei: this.formData.qingxifanwei,
+                        environmentData: this.environmentData,
                         specDetails: this.specDetails,
                         multipleEntries: this.multipleEntries,
                         summaryData: this.summaryData,

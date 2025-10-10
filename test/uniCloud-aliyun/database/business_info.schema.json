@@ -1,0 +1,205 @@
+{
+    "bsonType": "object",
+    "description": "商业信息管理表",
+    "required": ["name", "location"],
+    "permission": {
+        ".read": true,
+        ".create": true,
+        ".update": "doc.userId == auth.uid || auth.role.includes('admin')",
+        ".delete": "auth.role.includes('admin')"
+    },
+    "properties": {
+        "_id": {
+            "description": "记录ID，系统自动生成"
+        },
+        "name": {
+            "bsonType": "string",
+            "description": "商户名称",
+            "label": "名称",
+            "trim": "both"
+        },
+        "location": {
+            "bsonType": "string",
+            "description": "商户位置",
+            "label": "位置"
+        },
+        "appearance": {
+            "bsonType": "string",
+            "description": "外观描述",
+            "label": "外观描述"
+        },
+        "parkingEntrance": {
+            "bsonType": "string",
+            "description": "停车场入口位置",
+            "label": "停车场入口"
+        },
+        "parkingPrice": {
+            "bsonType": "string",
+            "description": "停车价格",
+            "label": "价格"
+        },
+        "parkingReaction": {
+            "bsonType": "string",
+            "description": "停车反应评价",
+            "label": "停车反应",
+            "enum": ["良好", "一般", "较差", "无停车位"],
+            "default": "一般"
+        },
+        "reputation": {
+            "bsonType": "string",
+            "description": "口碑评价",
+            "label": "口碑评价"
+        },
+        "businessType": {
+            "bsonType": "string",
+            "description": "商户类型",
+            "label": "商户类型",
+            "enum": ["餐饮", "酒店", "商场", "写字楼", "工厂", "其他"]
+        },
+        "customerInfo": {
+            "bsonType": "object",
+            "description": "商户详细信息",
+            "label": "商户信息",
+            "properties": {
+                "storefront": {
+                    "bsonType": "string",
+                    "description": "门脸描述",
+                    "label": "门脸"
+                },
+                "previousCleaning": {
+                    "bsonType": "string",
+                    "description": "之前清洗情况",
+                    "label": "清洗历史"
+                },
+                "cleaningReason": {
+                    "bsonType": "string",
+                    "description": "清洗原因",
+                    "label": "清洗原因"
+                },
+                "contactPerson": {
+                    "bsonType": "string",
+                    "description": "联系人姓名",
+                    "label": "联系人"
+                },
+                "contactPhone": {
+                    "bsonType": "string",
+                    "description": "联系电话",
+                    "label": "联系电话"
+                },
+                "contactPosition": {
+                    "bsonType": "string",
+                    "description": "联系人职位",
+                    "label": "职位"
+                },
+                "notes": {
+                    "bsonType": "string",
+                    "description": "备注信息",
+                    "label": "备注"
+                }
+            }
+        },
+        "photos": {
+            "bsonType": "array",
+            "description": "商户照片",
+            "label": "照片",
+            "items": {
+                "bsonType": "string"
+            }
+        },
+        "gpsLocation": {
+            "bsonType": "object",
+            "description": "GPS定位信息",
+            "properties": {
+                "latitude": {
+                    "bsonType": "double",
+                    "description": "纬度"
+                },
+                "longitude": {
+                    "bsonType": "double",
+                    "description": "经度"
+                },
+                "address": {
+                    "bsonType": "string",
+                    "description": "详细地址"
+                }
+            }
+        },
+        "operatingHours": {
+            "bsonType": "string",
+            "description": "营业时间",
+            "label": "营业时间"
+        },
+        "serviceHistory": {
+            "bsonType": "array",
+            "description": "服务历史记录",
+            "label": "服务历史",
+            "items": {
+                "bsonType": "object",
+                "properties": {
+                    "serviceDate": {
+                        "bsonType": "timestamp",
+                        "description": "服务日期"
+                    },
+                    "serviceType": {
+                        "bsonType": "string",
+                        "description": "服务类型"
+                    },
+                    "recordId": {
+                        "bsonType": "string",
+                        "description": "关联记录ID"
+                    },
+                    "notes": {
+                        "bsonType": "string",
+                        "description": "服务备注"
+                    }
+                }
+            }
+        },
+        "tags": {
+            "bsonType": "array",
+            "description": "标签",
+            "label": "标签",
+            "items": {
+                "bsonType": "string"
+            }
+        },
+        "isActive": {
+            "bsonType": "bool",
+            "description": "是否活跃客户",
+            "label": "活跃状态",
+            "default": true
+        },
+        "rating": {
+            "bsonType": "int",
+            "description": "客户评级(1-5星)",
+            "label": "评级",
+            "minimum": 1,
+            "maximum": 5
+        },
+        "createTime": {
+            "bsonType": "timestamp",
+            "description": "创建时间",
+            "forceDefaultValue": {
+                "$env": "now"
+            }
+        },
+        "updateTime": {
+            "bsonType": "timestamp",
+            "description": "更新时间"
+        },
+        "userId": {
+            "bsonType": "string",
+            "description": "创建用户ID"
+        },
+        "lastServiceDate": {
+            "bsonType": "timestamp",
+            "description": "最后服务日期",
+            "label": "最后服务"
+        },
+        "nextScheduledService": {
+            "bsonType": "timestamp",
+            "description": "下次预约服务日期",
+            "label": "下次服务"
+        }
+    }
+}

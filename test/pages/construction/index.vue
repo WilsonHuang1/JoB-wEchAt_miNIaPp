@@ -653,56 +653,55 @@
                 }
             },
 
-            // Save cleaning record
-            saveCleaningRecord() {
-                const cleaningData = {
-                    selectedCleaningItems: this.selectedCleaningItems,
-                    selectedSubOptions: this.selectedSubOptions,
-                    sideNotes: this.sideNotes,
-                    detailedBeforePhotos: this.detailedBeforePhotos,
-                    detailedAfterPhotos: this.detailedAfterPhotos,
-                    workPhotos: this.workPhotos,
-                    environmentNotes: this.environmentNotes,
-                    customOptions: this.cleaningOptions.filter(opt => opt.value.startsWith('custom_')),
-                    customOptionPhotos: this.customOptionPhotos,
-                    timestamp: new Date().toISOString(),
-                    worker: this.userInfo.name,
-                    company: this.userInfo.company
-                };
+            async saveCleaningRecord() {
+                try {
+                    uni.showLoading({
+                        title: '保存中...'
+                    });
 
-                // TODO: Send cleaningData to cloud/server here
-                // await uploadToCloud(cleaningData);
+                    const db = uniCloud.database();
 
-                // Clear all local storage and form data
-                uni.removeStorageSync('cleaningData');
+                    const record = {
+                        projectName: this.projectName || '未命名项目', // Add input for this
+                        projectLocation: this.projectLocation || '', // Add input for this
+                        cleaningDate: Date.now(),
+                        cleaningAreas: this.beforeCleaningSelected,
+                        selectedSubOptions: this.selectedSubOptions,
+                        customSubOptions: this.customSubOptions,
+                        sideNotes: this.sideNotes,
+                        detailedBeforePhotos: this.detailedBeforePhotos,
+                        detailedAfterPhotos: this.detailedAfterPhotos,
+                        workPhotos: this.workPhotos,
+                        environmentNotes: this.environmentNotes,
+                        workerName: this.userInfo.name,
+                        workerCompany: this.userInfo.company,
+                        userId: uni.getStorageSync('userId') || 'temp_user',
+                        status: 'draft',
+                        // Optional: link to inspection record
+                        relatedInspectionId: this.relatedInspectionId || null
+                    };
 
-                // Reset all form data to initial state
-                this.selectedCleaningItems = [];
-                this.selectedSubOptions = {};
-                this.sideNotes = {};
-                this.detailedBeforePhotos = {};
-                this.detailedAfterPhotos = {};
-                this.workPhotos = [];
-                this.environmentNotes = '';
-                this.customOptionPhotos = {
-                    before: {},
-                    after: {}
-                };
+                    const result = await db.collection('construction_records').add(record);
 
-                // Reset to first step
-                this.currentStep = 'beforeCleaning';
+                    uni.hideLoading();
+                    uni.showToast({
+                        title: '保存成功',
+                        icon: 'success'
+                    });
 
-                // Remove custom options from cleaningOptions array
-                this.cleaningOptions = this.cleaningOptions.filter(opt => !opt.value.startsWith('custom_'));
+                    // Navigate back or to list
+                    setTimeout(() => {
+                        uni.navigateBack();
+                    }, 1500);
 
-                uni.showToast({
-                    title: '清洗记录保存成功',
-                    icon: 'success'
-                });
-
-                setTimeout(() => {
-                    uni.navigateBack();
-                }, 2000);
+                } catch (error) {
+                    uni.hideLoading();
+                    console.error('保存失败:', error);
+                    uni.showToast({
+                        title: '保存失败: ' + error.message,
+                        icon: 'none'
+                    });
+                }
             },
 
             // Load saved data
