@@ -62,6 +62,11 @@
             }
         }
     ],
+    "permission": {
+        "scope.userLocation": {
+            "desc": "你的位置信息将用于现场踏勘定位"
+        }
+    },
     "globalStyle": {
         "navigationBarTextStyle": "black",
         "navigationBarTitleText": "业务管理系统",

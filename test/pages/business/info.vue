@@ -130,7 +130,7 @@
                         icon: 'none'
                     });
                 }
-            }
+            },
 
             goBack() {
                 uni.navigateBack();

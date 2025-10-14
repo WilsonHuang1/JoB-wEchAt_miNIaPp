@@ -1,0 +1,21 @@
+{
+    "bsonType": "object",
+    "required": ["openid"],
+    "properties": {
+        "_id": {
+            "description": "ID"
+        },
+        "openid": {
+            "bsonType": "string",
+            "description": "微信openid"
+        },
+        "name": {
+            "bsonType": "string",
+            "description": "用户姓名"
+        },
+        "company": {
+            "bsonType": "string",
+            "description": "所属公司"
+        }
+    }
+}

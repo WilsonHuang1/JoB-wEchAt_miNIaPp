@@ -59,12 +59,11 @@
                         </view>
 
                         <view class="form-group">
-                            <text class="label">地点</text>
-                            <view class="location-wrapper">
-                                <input class="input location-input" v-model="formData.didian" placeholder="点击获取位置"
-                                    readonly />
-                                <button class="location-btn" @click="getLocation">📍</button>
+                            <text class="label">现场位置</text>
+                            <view class="location-display-box">
+                                <text class="location-text">{{ formData.address || '点击下方按钮获取位置' }}</text>
                             </view>
+                            <button class="location-btn" @click="getLocation">选择位置</button>
                         </view>
 
                         <view class="form-group">
@@ -188,10 +187,15 @@
                                     <!-- 拍照(清洗前) -->
                                     <view class="spec-field">
                                         <text class="spec-label">拍照(清洗前) *</text>
-                                        <view class="photo-section">
-                                            <button class="photo-btn" @click="takePhoto(index, 'before')">📷 拍照</button>
-                                            <text class="photo-count" v-if="item.specs.photoBefore.length > 0">已拍
-                                                {{item.specs.photoBefore.length}} 张</text>
+                                        <button class="photo-btn-add" @click="takePhoto(index, 'before')">📷
+                                            添加照片</button>
+                                        <view class="photo-preview-grid" v-if="item.specs.photoBefore.length > 0">
+                                            <view class="photo-item"
+                                                v-for="(photo, photoIndex) in item.specs.photoBefore" :key="photoIndex">
+                                                <image class="photo-image" :src="photo" mode="aspectFill"></image>
+                                                <view class="photo-delete"
+                                                    @click="deletePhoto(index, 'before', photoIndex)">×</view>
+                                            </view>
                                         </view>
                                     </view>
                                 </view>
@@ -229,12 +233,20 @@
                             <view class="summary-section">
                                 <text class="summary-title">踏勘摘要</text>
                                 <view class="summary-item">
+                                    <text class="summary-label">名称：</text>
+                                    <text class="summary-value">{{formData.mingcheng}}</text>
+                                </view>
+                                <view class="summary-item">
                                     <text class="summary-label">地点：</text>
-                                    <text class="summary-value">{{formData.didian}}</text>
+                                    <text class="summary-value">{{formData.address}}</text>
                                 </view>
                                 <view class="summary-item">
                                     <text class="summary-label">踏勘人员：</text>
                                     <text class="summary-value">{{formData.tankanyuan}}</text>
+                                </view>
+                                <view class="summary-item">
+                                    <text class="summary-label">归属：</text>
+                                    <text class="summary-value">{{formData.guishu}}</text>
                                 </view>
                                 <view class="summary-item">
                                     <text class="summary-label">清洗范围：</text>
@@ -317,6 +329,9 @@
                     guishu: '',
                     didian: '',
                     tankanyuan: '',
+                    address: '',
+                    latitude: '',
+                    longitude: '',
                     mingcheng: ''
                 },
                 environmentData: {
@@ -363,7 +378,7 @@
                     case 'preparation':
                         return this.formData.guishu &&
                             this.formData.tankanyuan &&
-                            this.formData.didian &&
+                            this.formData.address &&
                             this.formData.mingcheng;
 
                     case 'environment':
@@ -408,7 +423,7 @@
 
             // Step navigation methods
             proceedToEnvironment() {
-                if (!this.formData.guishu || !this.formData.tankanyuan || !this.formData.didian || !this.formData
+                if (!this.formData.guishu || !this.formData.tankanyuan || !this.formData.address || !this.formData
                     .mingcheng) {
                     uni.showToast({
                         title: '请完善基础信息',
@@ -432,7 +447,7 @@
             },
 
             proceedToCompletion() {
-                if (this.selectedCleaningOptions.length === 0) {
+                if (this.addedItems.length === 0) {
                     uni.showToast({
                         title: '请选择至少一个清洗范围',
                         icon: 'none'
@@ -516,20 +531,21 @@
 
             // Location method
             getLocation() {
-                const demoLocations = [
-                    '北京市朝阳区建国门外大街1号',
-                    '上海市浦东新区陆家嘴环路1000号',
-                    '广州市天河区珠江新城花城大道85号',
-                    '深圳市南山区深南大道10000号',
-                    '杭州市西湖区文三路90号'
-                ];
+                uni.chooseLocation({
+                    success: (res) => {
+                        console.log('选择的位置:', res);
+                        this.formData.latitude = res.latitude;
+                        this.formData.longitude = res.longitude;
+                        this.formData.address = res.address + ' ' + res.name;
 
-                const randomLocation = demoLocations[Math.floor(Math.random() * demoLocations.length)];
-                this.formData.didian = randomLocation;
-
-                uni.showToast({
-                    title: '模拟位置获取成功',
-                    icon: 'success'
+                        uni.showToast({
+                            title: '位置选择成功',
+                            icon: 'success'
+                        });
+                    },
+                    fail: (err) => {
+                        console.error('位置选择失败:', err);
+                    }
                 });
             },
 
@@ -614,6 +630,17 @@
                             icon: 'none'
                         });
                     }
+                });
+            },
+
+            deletePhoto(itemIndex, type, photoIndex) {
+                const specs = this.addedItems[itemIndex].specs;
+                if (type === 'before') {
+                    specs.photoBefore.splice(photoIndex, 1);
+                }
+                uni.showToast({
+                    title: '照片已删除',
+                    icon: 'success'
                 });
             },
 
@@ -1195,25 +1222,34 @@
         margin-bottom: 15rpx;
         padding-bottom: 10rpx;
         border-bottom: 1rpx solid #e0e0e0;
+        position: relative;
+    }
+
+    .remove-btn {
+        width: 50rpx;
+        height: 50rpx;
+        background-color: #999;
+        color: white;
+        border: none;
+        border-radius: 8rpx;
+        font-size: 32rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        position: absolute;
+        right: 0rpx;
+        top: 0rpx;
+
+        &:active {
+            background-color: #666;
+        }
     }
 
     .item-title {
         font-size: 28rpx;
         font-weight: bold;
         color: #333;
-    }
-
-    .remove-btn {
-        width: 40rpx;
-        height: 40rpx;
-        background-color: #ff4757;
-        color: white;
-        border: none;
-        border-radius: 50%;
-        font-size: 24rpx;
-        display: flex;
-        align-items: center;
-        justify-content: center;
     }
 
     .item-specs {
@@ -1294,5 +1330,77 @@
         &:active {
             background-color: #e6f3ff;
         }
+    }
+
+    .location-display-box {
+        background-color: #fafafa;
+        border: 2rpx solid #e5e5e5;
+        border-radius: 12rpx;
+        padding: 25rpx;
+        min-height: 120rpx;
+        margin-bottom: 20rpx;
+    }
+
+    .location-text {
+        font-size: 32rpx;
+        color: #333;
+        line-height: 1.5;
+        word-wrap: break-word;
+    }
+
+    .location-btn {
+        width: 100%;
+        background-color: #007AFF;
+        color: white;
+        border-radius: 12rpx;
+        padding: 20rpx;
+    }
+
+    .photo-btn-add {
+        width: 100%;
+        padding: 20rpx;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 12rpx;
+        font-size: 28rpx;
+        margin-bottom: 20rpx;
+    }
+
+    .photo-preview-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15rpx;
+    }
+
+    .photo-item {
+        position: relative;
+        width: 100%;
+        padding-bottom: 100%;
+        border-radius: 8rpx;
+        overflow: hidden;
+    }
+
+    .photo-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .photo-delete {
+        position: absolute;
+        top: 5rpx;
+        right: 5rpx;
+        width: 40rpx;
+        height: 40rpx;
+        background-color: rgba(0, 0, 0, 0.6);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28rpx;
     }
 </style>

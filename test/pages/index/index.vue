@@ -78,10 +78,30 @@
             wechatLogin() {
                 uni.login({
                     provider: 'weixin',
-                    success: (loginRes) => {
+                    success: async (loginRes) => {
                         console.log('微信登录成功', loginRes.code);
-                        const demoOpenId = 'demo_user_' + Math.floor(Math.random() * 3 + 1);
-                        const userData = this.getDemoUserData(demoOpenId);
+
+                        // Call cloud function
+                        const result = await uniCloud.callFunction({
+                            name: 'wechat-login',
+                            data: {
+                                code: loginRes.code
+                            }
+                        });
+
+                        console.log('OpenID:', result.result.openid);
+
+                        // Get user data from your database using openid
+                        const userResult = await uniCloud.callFunction({
+                            name: 'get-user',
+                            data: {
+                                openid: result.result.openid
+                            }
+                        });
+
+                        const userData = userResult.result;
+
+                        console.log('User data from database:', userData);
 
                         this.userInfo.name = userData.name;
                         this.userInfo.company = userData.company;
