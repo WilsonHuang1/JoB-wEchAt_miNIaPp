@@ -26,5 +26,8 @@
     "getLocation",
     "chooseLocation"
   ],
+  "uploadFile": {
+    "timeout": 60000
+  },
   "usingComponents": {}
 }

@@ -644,19 +644,19 @@
                 });
             },
 
-            // Document generation methods
-            generateDocument() {
-                this.documentGenerating = true;
+            // // Document generation methods
+            // generateDocument() {
+            //     this.documentGenerating = true;
 
-                setTimeout(() => {
-                    this.documentGenerating = false;
-                    this.documentGenerated = true;
-                    uni.showToast({
-                        title: '踏勘报告生成完成',
-                        icon: 'success'
-                    });
-                }, 3000);
-            },
+            //     setTimeout(() => {
+            //         this.documentGenerating = false;
+            //         this.documentGenerated = true;
+            //         uni.showToast({
+            //             title: '踏勘报告生成完成',
+            //             icon: 'success'
+            //         });
+            //     }, 3000);
+            // },
 
             previewDocument() {
                 uni.showToast({
@@ -665,29 +665,98 @@
                 });
             },
 
+            async uploadPhotos() {
+                const uploadedPhotos = [];
+
+                for (let item of this.addedItems) {
+                    const uploadedBeforePhotos = [];
+
+                    for (let photoPath of item.specs.photoBefore) {
+                        try {
+                            const result = await uniCloud.uploadFile({
+                                filePath: photoPath,
+                                cloudPath: `tankan/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`
+                            });
+                            uploadedBeforePhotos.push(result.fileID);
+                        } catch (error) {
+                            console.error('照片上传失败:', error);
+                        }
+                    }
+
+                    uploadedPhotos.push({
+                        type: item.type,
+                        specs: {
+                            ...item.specs,
+                            photoBefore: uploadedBeforePhotos
+                        }
+                    });
+                }
+
+                return uploadedPhotos;
+            },
+
             // Save method
-            save() {
-                const completeData = {
-                    ...this.formData,
-                    environmentData: this.environmentData,
-                    qingxifanwei: this.qingxifanwei,
-                    specDetails: this.specDetails,
-                    pipeEntries: this.pipeEntries,
-                    timestamp: new Date().toISOString(),
-                    inspector: this.userInfo.name,
-                    company: this.userInfo.company
-                };
+            async save() {
+                try {
+                    uni.showLoading({
+                        title: '上传照片中...'
+                    });
 
-                uni.setStorageSync('inspectionData', completeData);
-                uni.showToast({
-                    title: '踏勘数据保存成功',
-                    icon: 'success'
-                });
-                this.generateDocument();
+                    // Upload photos first
+                    const uploadedItems = await this.uploadPhotos();
 
-                setTimeout(() => {
-                    this.goBack();
-                }, 2000);
+                    uni.showLoading({
+                        title: '保存数据中...'
+                    });
+
+                    const db = uniCloud.database();
+
+                    if (!this.formData.latitude) {
+                        uni.hideLoading();
+                        uni.showToast({
+                            title: '请先选择位置',
+                            icon: 'none'
+                        });
+                        return;
+                    }
+
+                    const completeData = {
+                        guishu: this.formData.guishu,
+                        tankanyuan: this.formData.tankanyuan,
+                        didian: this.formData.address,
+                        mingcheng: this.formData.mingcheng,
+                        environmentData: this.environmentData,
+                        qingxifanwei: uploadedItems, // Everything in one place now
+                        multipleEntries: {},
+                        location: {
+                            latitude: this.formData.latitude,
+                            longitude: this.formData.longitude,
+                            address: this.formData.address
+                        },
+                        userId: uni.getStorageSync('userId') || 'temp_user',
+                        status: 'submitted'
+                    };
+
+                    const result = await db.collection('tankan_records').add(completeData);
+
+                    uni.hideLoading();
+                    uni.showToast({
+                        title: '踏勘数据上传成功',
+                        icon: 'success'
+                    });
+
+                    setTimeout(() => {
+                        uni.navigateBack();
+                    }, 1500);
+
+                } catch (error) {
+                    uni.hideLoading();
+                    console.error('保存失败:', error);
+                    uni.showToast({
+                        title: '保存失败: ' + error.message,
+                        icon: 'none'
+                    });
+                }
             },
 
             goBack() {

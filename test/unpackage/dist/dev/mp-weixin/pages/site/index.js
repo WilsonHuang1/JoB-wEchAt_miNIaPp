@@ -314,45 +314,102 @@ const _sfc_main = {
         icon: "success"
       });
     },
-    // Document generation methods
-    generateDocument() {
-      this.documentGenerating = true;
-      setTimeout(() => {
-        this.documentGenerating = false;
-        this.documentGenerated = true;
-        common_vendor.index.showToast({
-          title: "踏勘报告生成完成",
-          icon: "success"
-        });
-      }, 3e3);
-    },
+    // // Document generation methods
+    // generateDocument() {
+    //     this.documentGenerating = true;
+    //     setTimeout(() => {
+    //         this.documentGenerating = false;
+    //         this.documentGenerated = true;
+    //         uni.showToast({
+    //             title: '踏勘报告生成完成',
+    //             icon: 'success'
+    //         });
+    //     }, 3000);
+    // },
     previewDocument() {
       common_vendor.index.showToast({
         title: "打开报告预览",
         icon: "success"
       });
     },
+    async uploadPhotos() {
+      const uploadedPhotos = [];
+      for (let item of this.addedItems) {
+        const uploadedBeforePhotos = [];
+        for (let photoPath of item.specs.photoBefore) {
+          try {
+            const result = await common_vendor.tr.uploadFile({
+              filePath: photoPath,
+              cloudPath: `tankan/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`
+            });
+            uploadedBeforePhotos.push(result.fileID);
+          } catch (error) {
+            common_vendor.index.__f__("error", "at pages/site/index.vue:682", "照片上传失败:", error);
+          }
+        }
+        uploadedPhotos.push({
+          type: item.type,
+          specs: {
+            ...item.specs,
+            photoBefore: uploadedBeforePhotos
+          }
+        });
+      }
+      return uploadedPhotos;
+    },
     // Save method
-    save() {
-      const completeData = {
-        ...this.formData,
-        environmentData: this.environmentData,
-        qingxifanwei: this.qingxifanwei,
-        specDetails: this.specDetails,
-        pipeEntries: this.pipeEntries,
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        inspector: this.userInfo.name,
-        company: this.userInfo.company
-      };
-      common_vendor.index.setStorageSync("inspectionData", completeData);
-      common_vendor.index.showToast({
-        title: "踏勘数据保存成功",
-        icon: "success"
-      });
-      this.generateDocument();
-      setTimeout(() => {
-        this.goBack();
-      }, 2e3);
+    async save() {
+      try {
+        common_vendor.index.showLoading({
+          title: "上传照片中..."
+        });
+        const uploadedItems = await this.uploadPhotos();
+        common_vendor.index.showLoading({
+          title: "保存数据中..."
+        });
+        const db = common_vendor.tr.database();
+        if (!this.formData.latitude) {
+          common_vendor.index.hideLoading();
+          common_vendor.index.showToast({
+            title: "请先选择位置",
+            icon: "none"
+          });
+          return;
+        }
+        const completeData = {
+          guishu: this.formData.guishu,
+          tankanyuan: this.formData.tankanyuan,
+          didian: this.formData.address,
+          mingcheng: this.formData.mingcheng,
+          environmentData: this.environmentData,
+          qingxifanwei: uploadedItems,
+          // Everything in one place now
+          multipleEntries: {},
+          location: {
+            latitude: this.formData.latitude,
+            longitude: this.formData.longitude,
+            address: this.formData.address
+          },
+          userId: common_vendor.index.getStorageSync("userId") || "temp_user",
+          status: "submitted"
+        };
+        const result = await db.collection("tankan_records").add(completeData);
+        common_vendor.index.hideLoading();
+        common_vendor.index.showToast({
+          title: "踏勘数据上传成功",
+          icon: "success"
+        });
+        setTimeout(() => {
+          common_vendor.index.navigateBack();
+        }, 1500);
+      } catch (error) {
+        common_vendor.index.hideLoading();
+        common_vendor.index.__f__("error", "at pages/site/index.vue:754", "保存失败:", error);
+        common_vendor.index.showToast({
+          title: "保存失败: " + error.message,
+          icon: "none"
+        });
+      }
     },
     goBack() {
       common_vendor.index.navigateBack();
@@ -491,7 +548,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     av: common_vendor.t($options.getCleaningSummary()),
     aw: $data.documentGenerating
   }, $data.documentGenerating ? {} : common_vendor.e({
-    ax: common_vendor.o((...args) => $options.generateDocument && $options.generateDocument(...args)),
+    ax: common_vendor.o((...args) => _ctx.generateDocument && _ctx.generateDocument(...args)),
     ay: $data.documentGenerated
   }, $data.documentGenerated ? {
     az: common_vendor.o((...args) => $options.previewDocument && $options.previewDocument(...args))

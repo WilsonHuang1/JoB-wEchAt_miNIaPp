@@ -34,10 +34,47 @@
         },
         "qingxifanwei": {
             "bsonType": "array",
-            "description": "清洗范围选项",
+            "description": "清洗范围详细信息数组（包含所有清洗项目的完整信息和照片）",
             "label": "清洗范围",
             "items": {
-                "bsonType": "string"
+                "bsonType": "object",
+                "properties": {
+                    "type": {
+                        "bsonType": "string",
+                        "description": "清洗类型"
+                    },
+                    "position": {
+                        "bsonType": "string",
+                        "description": "具体位置"
+                    },
+                    "model": {
+                        "bsonType": "string",
+                        "description": "型号规格"
+                    },
+                    "unit": {
+                        "bsonType": "string",
+                        "description": "单位"
+                    },
+                    "quantity": {
+                        "bsonType": "string",
+                        "description": "数量"
+                    },
+                    "frequency": {
+                        "bsonType": "string",
+                        "description": "作业频次"
+                    },
+                    "length": {
+                        "bsonType": "string",
+                        "description": "长度（仅厨房烟罩）"
+                    },
+                    "photoBefore": {
+                        "bsonType": "array",
+                        "description": "清洗前照片云存储URL数组",
+                        "items": {
+                            "bsonType": "string"
+                        }
+                    }
+                }
             }
         },
         "environmentData": {
@@ -81,11 +118,6 @@
                     "label": "其他情况"
                 }
             }
-        },
-        "specDetails": {
-            "bsonType": "object",
-            "description": "各清洗范围的详细规格信息",
-            "label": "规格详情"
         },
         "multipleEntries": {
             "bsonType": "object",
