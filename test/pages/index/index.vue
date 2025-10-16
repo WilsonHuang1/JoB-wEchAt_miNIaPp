@@ -107,6 +107,14 @@
                         this.userInfo.company = userData.company;
                         this.userInfo.isLoggedIn = true;
 
+                        // ✅ ADD THESE LINES:
+                        // Save userId and openid to storage
+                        uni.setStorageSync('userId', userData._id || result.result.openid);
+                        uni.setStorageSync('openid', result.result.openid);
+
+                        // Also save userInfo
+                        uni.setStorageSync('userInfo', this.userInfo);
+
                         uni.showToast({
                             title: `欢迎 ${userData.name}`,
                             icon: 'success'
@@ -122,6 +130,10 @@
                         this.userInfo.name = userData.name;
                         this.userInfo.company = userData.company;
                         this.userInfo.isLoggedIn = true;
+
+                        // ✅ ADD THIS LINE FOR DEMO MODE TOO:
+                        uni.setStorageSync('userId', 'demo_user_1');
+                        uni.setStorageSync('userInfo', this.userInfo);
                     }
                 });
             },

@@ -1,0 +1,32 @@
+{
+    "bsonType": "object",
+    "description": "用户会话密钥存储（服务端专用，客户端无权访问）",
+    "required": ["openid", "session_key"],
+    "permission": {
+        ".read": false,
+        ".create": false,
+        ".update": false,
+        ".delete": false
+    },
+    "properties": {
+        "_id": {
+            "description": "文档ID（使用openid）"
+        },
+        "openid": {
+            "bsonType": "string",
+            "description": "用户OpenID"
+        },
+        "session_key": {
+            "bsonType": "string",
+            "description": "微信会话密钥（绝不发送到客户端）"
+        },
+        "unionid": {
+            "bsonType": "string",
+            "description": "用户UnionID"
+        },
+        "updateTime": {
+            "bsonType": "timestamp",
+            "description": "最后更新时间"
+        }
+    }
+}

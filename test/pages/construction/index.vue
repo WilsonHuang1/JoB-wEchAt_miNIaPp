@@ -91,12 +91,20 @@
                                 <!-- Photo upload for custom options (其他部位) -->
                                 <view class="custom-photo-section" v-if="item.value.startsWith('custom_')">
                                     <text class="sub-photo-label">{{ item.label }} 清洗前照片</text>
-                                    <view class="photo-upload-area"
+                                    <button class="photo-btn-add"
                                         @click="uploadCustomOptionPhotos('before', item.value)">
-                                        <text>点击上传 {{ item.label }} 清洗前照片</text>
-                                        <text class="photo-count" v-if="getCustomPhotoCount('before', item.value)">
-                                            已上传 {{ getCustomPhotoCount('before', item.value) }} 张
-                                        </text>
+                                        📷 添加照片
+                                    </button>
+                                    <view class="photo-preview-grid"
+                                        v-if="getCustomPhotoCount('before', item.value) > 0">
+                                        <view class="photo-item"
+                                            v-for="(photo, photoIndex) in customOptionPhotos.before[item.value]"
+                                            :key="photoIndex">
+                                            <image class="photo-image" :src="photo" mode="aspectFill"></image>
+                                            <view class="photo-delete"
+                                                @click="deleteCustomOptionPhoto('before', item.value, photoIndex)">×
+                                            </view>
+                                        </view>
                                     </view>
                                 </view>
 
@@ -106,13 +114,20 @@
                                         :key="subOption">
                                         <text class="sub-photo-label">{{ getSubOptionLabel(item.value, subOption) }}
                                             照片</text>
-                                        <view class="photo-upload-area"
+                                        <button class="photo-btn-add"
                                             @click="uploadDetailedPhotos('before', item.id, subOption)">
-                                            <text>点击上传 {{ getSubOptionLabel(item.value, subOption) }} 清洗前照片</text>
-                                            <text class="photo-count"
-                                                v-if="getDetailedPhotoCount('before', item.id, subOption)">
-                                                已上传 {{ getDetailedPhotoCount('before', item.id, subOption) }} 张
-                                            </text>
+                                            📷 添加照片
+                                        </button>
+                                        <view class="photo-preview-grid"
+                                            v-if="getDetailedPhotoCount('before', item.id, subOption) > 0">
+                                            <view class="photo-item"
+                                                v-for="(photo, photoIndex) in detailedBeforePhotos[item.id][subOption]"
+                                                :key="photoIndex">
+                                                <image class="photo-image" :src="photo" mode="aspectFill"></image>
+                                                <view class="photo-delete"
+                                                    @click="deleteDetailedPhoto('before', item.id, subOption, photoIndex)">
+                                                    ×</view>
+                                            </view>
                                         </view>
                                     </view>
                                 </view>
@@ -179,12 +194,20 @@
                                 <!-- Photo upload for custom options in after cleaning -->
                                 <view class="custom-photo-section" v-if="item.value.startsWith('custom_')">
                                     <text class="sub-photo-label">{{ item.label }} 清洗后照片</text>
-                                    <view class="photo-upload-area"
+                                    <button class="photo-btn-add"
                                         @click="uploadCustomOptionPhotos('after', item.value)">
-                                        <text>点击上传 {{ item.label }} 清洗后照片</text>
-                                        <text class="photo-count" v-if="getCustomPhotoCount('after', item.value)">
-                                            已上传 {{ getCustomPhotoCount('after', item.value) }} 张
-                                        </text>
+                                        📷 添加照片
+                                    </button>
+                                    <view class="photo-preview-grid"
+                                        v-if="getCustomPhotoCount('after', item.value) > 0">
+                                        <view class="photo-item"
+                                            v-for="(photo, photoIndex) in customOptionPhotos.after[item.value]"
+                                            :key="photoIndex">
+                                            <image class="photo-image" :src="photo" mode="aspectFill"></image>
+                                            <view class="photo-delete"
+                                                @click="deleteCustomOptionPhoto('after', item.value, photoIndex)">×
+                                            </view>
+                                        </view>
                                     </view>
                                 </view>
 
@@ -193,14 +216,21 @@
                                     <view class="sub-photo-item" v-for="subOption in getSelectedSubOptions(item.id)"
                                         :key="subOption">
                                         <text class="sub-photo-label">{{ getSubOptionLabel(item.value, subOption) }}
-                                            清洗后照片</text>
-                                        <view class="photo-upload-area"
+                                            照片</text>
+                                        <button class="photo-btn-add"
                                             @click="uploadDetailedPhotos('after', item.id, subOption)">
-                                            <text>点击上传 {{ getSubOptionLabel(item.value, subOption) }} 清洗后照片</text>
-                                            <text class="photo-count"
-                                                v-if="getDetailedPhotoCount('after', item.id, subOption)">
-                                                已上传 {{ getDetailedPhotoCount('after', item.id, subOption) }} 张
-                                            </text>
+                                            📷 添加照片
+                                        </button>
+                                        <view class="photo-preview-grid"
+                                            v-if="getDetailedPhotoCount('after', item.id, subOption) > 0">
+                                            <view class="photo-item"
+                                                v-for="(photo, photoIndex) in detailedAfterPhotos[item.id][subOption]"
+                                                :key="photoIndex">
+                                                <image class="photo-image" :src="photo" mode="aspectFill"></image>
+                                                <view class="photo-delete"
+                                                    @click="deleteDetailedPhoto('after', item.id, subOption, photoIndex)">
+                                                    ×</view>
+                                            </view>
                                         </view>
                                     </view>
                                 </view>
@@ -220,11 +250,12 @@
 
                         <view class="photo-upload-section">
                             <text class="label">上传工作照片</text>
-                            <view class="photo-upload-area" @click="uploadWorkPhotos">
-                                <text>点击上传工作照片</text>
-                                <text class="photo-count" v-if="workPhotos.length">
-                                    已上传 {{ workPhotos.length }} 张
-                                </text>
+                            <button class="photo-btn-add" @click="uploadWorkPhotos">📷 添加照片</button>
+                            <view class="photo-preview-grid" v-if="workPhotos.length > 0">
+                                <view class="photo-item" v-for="(photo, photoIndex) in workPhotos" :key="photoIndex">
+                                    <image class="photo-image" :src="photo" mode="aspectFill"></image>
+                                    <view class="photo-delete" @click="deleteWorkPhoto(photoIndex)">×</view>
+                                </view>
                             </view>
                         </view>
 
@@ -236,7 +267,26 @@
 
                     <!-- Step 4: 环境变更记录 -->
                     <view v-if="currentStep === 'environmentNotes'">
-                        <view class="section-subtitle">环境变更记录</view>
+                        <view class="section-subtitle">完成清洗</view>
+
+                        <!-- Summary Section -->
+                        <view class="summary-section">
+                            <view class="summary-title">📊 数据完成情况</view>
+                            <view class="summary-item">
+                                <text class="summary-label">清洗前照片:</text>
+                                <text class="summary-value">已完成
+                                    {{getBeforePhotosCount()}}/{{selectedCleaningItems.length}} 项</text>
+                            </view>
+                            <view class="summary-item">
+                                <text class="summary-label">清洗后照片:</text>
+                                <text class="summary-value">已完成
+                                    {{getAfterPhotosCount()}}/{{selectedCleaningItems.length}} 项</text>
+                            </view>
+                            <view class="summary-item">
+                                <text class="summary-label">工作照:</text>
+                                <text class="summary-value">已上传 {{workPhotos.length}} 张</text>
+                            </view>
+                        </view>
 
                         <view class="form-group">
                             <text class="label">环境变更记录</text>
@@ -248,6 +298,11 @@
                             <button class="btn-secondary" @click="goToStep('workPhotos')">上一步</button>
                             <button class="btn-save" @click="saveCleaningRecord">保存记录</button>
                         </view>
+
+                        <!-- Report Generation Button (for future) -->
+                        <button class="btn-report" @click="generateReport" :disabled="true">
+                            📄 生成报告 (开发中)
+                        </button>
                     </view>
                 </view>
             </view>
@@ -373,18 +428,25 @@
                 environmentNotes: '',
 
                 userInfo: {
-                    name: uni.getStorageSync('userName') || '未知用户',
-                    company: uni.getStorageSync('userCompany') || '未知公司'
+                    name: '',
+                    company: '',
+                    isLoggedIn: false
                 }
             };
         },
 
         onLoad() {
-            // TEMPORARY: Clear data on each load during development
-            uni.removeStorageSync('cleaningData');
+            // Get user info from storage (same way as 踏勘)
+            this.userInfo = uni.getStorageSync('userInfo') || {
+                name: '未知用户',
+                company: '未知公司',
+                isLoggedIn: false
+            };
 
-            // Load any saved data (should be empty now)
-            this.loadSavedData();
+            if (!this.userInfo.isLoggedIn) {
+                uni.navigateBack();
+                return;
+            }
         },
 
         methods: {
@@ -409,7 +471,7 @@
 
             // Add cleaning option (allows multiple of same type)
             addCleaningOption(value) {
-                const uniqueId = Date.now() + '_' + Math.random();
+                const uniqueId = Date.now() + '_' + Math.random().toString(36).substring(2, 9);
                 const option = this.cleaningOptions.find(opt => opt.value === value);
 
                 const newItem = {
@@ -653,8 +715,96 @@
                 }
             },
 
+            // Get count of items with before photos
+            getBeforePhotosCount() {
+                return this.selectedCleaningItems.filter(item => {
+                    if (item.value.startsWith('custom_')) {
+                        return this.getCustomPhotoCount('before', item.value) > 0;
+                    }
+                    // For regular options, check if ANY sub-option has photos
+                    const selectedSubs = this.getSelectedSubOptions(item.id);
+                    if (selectedSubs.length === 0) return false;
+
+                    // Count as complete if ANY sub-option has photos uploaded
+                    return selectedSubs.some(subOption => {
+                        return this.getDetailedPhotoCount('before', item.id, subOption) > 0;
+                    });
+                }).length;
+            },
+
+            // Get count of items with after photos
+            getAfterPhotosCount() {
+                return this.selectedCleaningItems.filter(item => {
+                    if (item.value.startsWith('custom_')) {
+                        return this.getCustomPhotoCount('after', item.value) > 0;
+                    }
+                    // For regular options, check if ANY sub-option has photos
+                    const selectedSubs = this.getSelectedSubOptions(item.id);
+                    if (selectedSubs.length === 0) return false;
+
+                    // Count as complete if ANY sub-option has photos uploaded
+                    return selectedSubs.some(subOption => {
+                        return this.getDetailedPhotoCount('after', item.id, subOption) > 0;
+                    });
+                }).length;
+            },
+
+            // Delete photo for custom options
+            deleteCustomOptionPhoto(type, option, photoIndex) {
+                if (this.customOptionPhotos[type] && this.customOptionPhotos[type][option]) {
+                    this.customOptionPhotos[type][option].splice(photoIndex, 1);
+                    uni.showToast({
+                        title: '照片已删除',
+                        icon: 'success'
+                    });
+                }
+            },
+
+            // Delete detailed photo
+            deleteDetailedPhoto(type, itemId, subOption, photoIndex) {
+                const photosObj = type === 'before' ? this.detailedBeforePhotos : this.detailedAfterPhotos;
+                if (photosObj[itemId] && photosObj[itemId][subOption]) {
+                    photosObj[itemId][subOption].splice(photoIndex, 1);
+                    uni.showToast({
+                        title: '照片已删除',
+                        icon: 'success'
+                    });
+                }
+            },
+
+            // Delete work photo
+            deleteWorkPhoto(photoIndex) {
+                this.workPhotos.splice(photoIndex, 1);
+                uni.showToast({
+                    title: '照片已删除',
+                    icon: 'success'
+                });
+            },
+
+            // Generate report (placeholder for future)
+            generateReport() {
+                uni.showToast({
+                    title: '功能开发中，敬请期待',
+                    icon: 'none',
+                    duration: 2000
+                });
+            },
+
             async saveCleaningRecord() {
                 try {
+                    // Validate field names before saving
+                    const validateKeys = (obj, path = '') => {
+                        for (let key in obj) {
+                            if (key.includes('.') || key.includes('$')) {
+                                console.error(`Illegal character in field: ${path}.${key}`);
+                                throw new Error(`Field name contains illegal character: ${key}`);
+                            }
+                            if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+                                validateKeys(obj[key], `${path}.${key}`);
+                            }
+                        }
+                    };
+
                     uni.showLoading({
                         title: '保存中...'
                     });
@@ -662,34 +812,34 @@
                     const db = uniCloud.database();
 
                     const record = {
-                        projectName: this.projectName || '未命名项目', // Add input for this
-                        projectLocation: this.projectLocation || '', // Add input for this
+                        workerName: this.userInfo.name,
+                        workerCompany: this.userInfo.company,
                         cleaningDate: Date.now(),
-                        cleaningAreas: this.beforeCleaningSelected,
+                        selectedCleaningItems: this.selectedCleaningItems,
                         selectedSubOptions: this.selectedSubOptions,
-                        customSubOptions: this.customSubOptions,
                         sideNotes: this.sideNotes,
+                        customOptionPhotos: this.customOptionPhotos,
                         detailedBeforePhotos: this.detailedBeforePhotos,
                         detailedAfterPhotos: this.detailedAfterPhotos,
                         workPhotos: this.workPhotos,
                         environmentNotes: this.environmentNotes,
-                        workerName: this.userInfo.name,
-                        workerCompany: this.userInfo.company,
                         userId: uni.getStorageSync('userId') || 'temp_user',
-                        status: 'draft',
-                        // Optional: link to inspection record
-                        relatedInspectionId: this.relatedInspectionId || null
+                        status: 'submitted'
                     };
+
+                    // Validate before saving
+                    validateKeys(record);
 
                     const result = await db.collection('construction_records').add(record);
 
                     uni.hideLoading();
                     uni.showToast({
-                        title: '保存成功',
+                        title: '清洗记录保存成功',
                         icon: 'success'
                     });
 
-                    // Navigate back or to list
+                    uni.removeStorageSync('cleaningData');
+
                     setTimeout(() => {
                         uni.navigateBack();
                     }, 1500);
@@ -699,31 +849,9 @@
                     console.error('保存失败:', error);
                     uni.showToast({
                         title: '保存失败: ' + error.message,
-                        icon: 'none'
+                        icon: 'none',
+                        duration: 3000
                     });
-                }
-            },
-
-            // Load saved data
-            loadSavedData() {
-                try {
-                    const savedData = uni.getStorageSync('cleaningData');
-                    if (savedData) {
-                        this.selectedCleaningItems = savedData.selectedCleaningItems || [];
-                        this.selectedSubOptions = savedData.selectedSubOptions || {};
-                        this.sideNotes = savedData.sideNotes || {};
-                        this.detailedBeforePhotos = savedData.detailedBeforePhotos || {};
-                        this.detailedAfterPhotos = savedData.detailedAfterPhotos || {};
-                        this.workPhotos = savedData.workPhotos || [];
-                        this.environmentNotes = savedData.environmentNotes || '';
-
-                        // Restore custom options
-                        if (savedData.customOptions) {
-                            this.cleaningOptions.push(...savedData.customOptions);
-                        }
-                    }
-                } catch (error) {
-                    console.error('加载保存数据失败:', error);
                 }
             }
         }
@@ -1231,6 +1359,67 @@
         }
     }
 
+    .photo-btn-add {
+        width: 100%;
+        padding: 20rpx;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 12rpx;
+        font-size: 28rpx;
+        margin-bottom: 20rpx;
+        cursor: pointer;
+
+        &:active {
+            opacity: 0.8;
+        }
+    }
+
+    .photo-preview-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15rpx;
+        margin-top: 20rpx;
+    }
+
+    .photo-item {
+        position: relative;
+        width: 100%;
+        padding-bottom: 100%;
+        border-radius: 8rpx;
+        overflow: hidden;
+        background-color: #f5f5f5;
+    }
+
+    .photo-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .photo-delete {
+        position: absolute;
+        top: 5rpx;
+        right: 5rpx;
+        width: 40rpx;
+        height: 40rpx;
+        background-color: rgba(0, 0, 0, 0.6);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28rpx;
+        cursor: pointer;
+
+        &:active {
+            background-color: rgba(255, 0, 0, 0.8);
+        }
+    }
+
     .photo-upload-section {
         margin-bottom: 30rpx;
     }
@@ -1283,6 +1472,66 @@
 
         &:active {
             background-color: #e0e0e0;
+        }
+    }
+
+    .summary-section {
+        background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+        padding: 30rpx;
+        border-radius: 12rpx;
+        margin-bottom: 30rpx;
+        border: 2rpx solid #007AFF;
+    }
+
+    .summary-title {
+        font-size: 32rpx;
+        font-weight: bold;
+        color: #007AFF;
+        margin-bottom: 20rpx;
+        text-align: center;
+    }
+
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 15rpx 0;
+        border-bottom: 1rpx solid #d0e8ff;
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+
+    .summary-label {
+        font-size: 28rpx;
+        color: #666;
+    }
+
+    .summary-value {
+        font-size: 28rpx;
+        font-weight: bold;
+        color: #007AFF;
+    }
+
+    .btn-report {
+        width: 100%;
+        padding: 24rpx 0;
+        border-radius: 12rpx;
+        font-size: 32rpx;
+        background-color: #34C759;
+        color: white;
+        border: none;
+        margin-top: 20rpx;
+        cursor: pointer;
+
+        &:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        &:active:not(:disabled) {
+            background-color: #2da94a;
         }
     }
 </style>
