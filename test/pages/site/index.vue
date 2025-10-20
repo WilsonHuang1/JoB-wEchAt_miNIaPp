@@ -260,16 +260,20 @@
                                     <text>正在生成踏勘报告...</text>
                                 </view>
                                 <view class="doc-actions" v-else>
-                                    <button class="doc-btn" @click="generateDocument">生成踏勘报告</button>
-                                    <button class="doc-btn" @click="previewDocument"
-                                        v-if="documentGenerated">预览报告</button>
+                                    <button class="doc-btn" @click="generateDocument" :disabled="!recordId">
+                                        生成踏勘报告
+                                    </button>
+                                    <button class="doc-btn-download" @click="downloadReport" v-if="documentGenerated">
+                                        📥 打开报告（可保存或分享）
+                                    </button>
                                 </view>
                             </view>
                         </view>
 
                         <view class="button-group">
                             <button class="btn-secondary" @click="goBackToInspection">返回修改</button>
-                            <button class="btn-save" @click="save">保存并结束</button>
+                            <button class="btn-save" @click="save" v-if="!recordId">保存记录</button>
+                            <button class="btn-save" @click="goBack" v-else>完成并返回</button>
                         </view>
                     </view>
                 </view>
@@ -285,8 +289,10 @@
                 currentStep: 'preparation', // preparation, environment, inspection, completion
                 documentGenerating: false,
                 documentGenerated: false,
+                generatedReportUrl: '',
                 isDropdownOpen: false,
                 sidebarVisible: true,
+                recordId: '', // Store the saved record ID
 
                 // Missing properties for step 3
                 qingxifanwei: [],
@@ -644,25 +650,121 @@
                 });
             },
 
-            // // Document generation methods
-            // generateDocument() {
-            //     this.documentGenerating = true;
+            async generateDocument() {
+                if (!this.recordId) {
+                    uni.showToast({
+                        title: '请先保存记录',
+                        icon: 'none'
+                    });
+                    return;
+                }
 
-            //     setTimeout(() => {
-            //         this.documentGenerating = false;
-            //         this.documentGenerated = true;
-            //         uni.showToast({
-            //             title: '踏勘报告生成完成',
-            //             icon: 'success'
-            //         });
-            //     }, 3000);
-            // },
+                this.documentGenerating = true;
 
-            previewDocument() {
-                uni.showToast({
-                    title: '打开报告预览',
-                    icon: 'success'
-                });
+                try {
+                    const result = await uniCloud.callFunction({
+                        name: 'generate-report',
+                        data: {
+                            recordId: this.recordId,
+                            recordType: 'tankan'
+                        }
+                    });
+
+                    this.documentGenerating = false;
+
+                    if (result.result.code === 200) {
+                        this.documentGenerated = true;
+                        this.generatedReportUrl = result.result.data.fileID;
+
+                        uni.showToast({
+                            title: '报告生成成功',
+                            icon: 'success'
+                        });
+                    } else {
+                        uni.showToast({
+                            title: '报告生成失败: ' + result.result.message,
+                            icon: 'none',
+                            duration: 3000
+                        });
+                    }
+                } catch (error) {
+                    this.documentGenerating = false;
+                    console.error('报告生成失败:', error);
+                    uni.showToast({
+                        title: '报告生成失败: ' + error.message,
+                        icon: 'none',
+                        duration: 3000
+                    });
+                }
+            },
+
+            async downloadReport() {
+                if (!this.generatedReportUrl) {
+                    uni.showToast({
+                        title: '没有可下载的报告',
+                        icon: 'none'
+                    });
+                    return;
+                }
+
+                try {
+                    uni.showLoading({
+                        title: '准备下载...'
+                    });
+
+                    // Get temp file URL
+                    const tempFileRes = await uniCloud.getTempFileURL({
+                        fileList: [this.generatedReportUrl]
+                    });
+
+                    if (tempFileRes.fileList && tempFileRes.fileList.length > 0) {
+                        const tempUrl = tempFileRes.fileList[0].tempFileURL;
+
+                        // Download file
+                        uni.downloadFile({
+                            url: tempUrl,
+                            success: (res) => {
+                                if (res.statusCode === 200) {
+                                    // Open file
+                                    uni.openDocument({
+                                        filePath: res.tempFilePath,
+                                        showMenu: true,
+                                        success: () => {
+                                            uni.hideLoading();
+                                            uni.showToast({
+                                                title: '报告已打开',
+                                                icon: 'success'
+                                            });
+                                        },
+                                        fail: (err) => {
+                                            uni.hideLoading();
+                                            console.error('打开文件失败:', err);
+                                            uni.showToast({
+                                                title: '无法打开文件',
+                                                icon: 'none'
+                                            });
+                                        }
+                                    });
+                                }
+                            },
+                            fail: (err) => {
+                                uni.hideLoading();
+                                console.error('下载失败:', err);
+                                uni.showToast({
+                                    title: '下载失败',
+                                    icon: 'none'
+                                });
+                            }
+                        });
+                    }
+                } catch (error) {
+                    uni.hideLoading();
+                    console.error('获取文件URL失败:', error);
+                    uni.showToast({
+                        title: '获取文件失败',
+                        icon: 'none'
+                    });
+                }
             },
 
             async uploadPhotos() {
@@ -739,16 +841,19 @@
 
                     const result = await db.collection('tankan_records').add(completeData);
 
+                    // The ID is in result.result.id
+                    this.$set(this, 'recordId', result.result.id);
+
+                    console.log('✅ Record ID saved:', this.recordId);
+
+                    this.$forceUpdate();
+
                     uni.hideLoading();
                     uni.showToast({
-                        title: '踏勘数据上传成功',
+                        title: '踏勘数据保存成功',
                         icon: 'success'
                     });
-
-                    setTimeout(() => {
-                        uni.navigateBack();
-                    }, 1500);
-
+                    // Don't navigate back immediately, let user generate report
                 } catch (error) {
                     uni.hideLoading();
                     console.error('保存失败:', error);
@@ -1471,5 +1576,20 @@
         align-items: center;
         justify-content: center;
         font-size: 28rpx;
+    }
+
+    .doc-btn-download {
+        width: 100%;
+        padding: 24rpx;
+        background: linear-gradient(135deg, #34C759, #30D158);
+        color: white;
+        border: none;
+        border-radius: 12rpx;
+        font-size: 32rpx;
+        margin-top: 20rpx;
+
+        &:active {
+            background: linear-gradient(135deg, #30B94D, #2BB84C);
+        }
     }
 </style>

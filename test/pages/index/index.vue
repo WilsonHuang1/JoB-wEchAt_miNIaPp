@@ -35,6 +35,12 @@
                     <text class="tab-title">营业管理</text>
                     <text class="tab-desc">商户信息管理</text>
                 </view>
+
+                <view class="tab-item admin" @click="goToAdmin">
+                    <view class="tab-icon">🖥️</view>
+                    <text class="tab-title">管理后台</text>
+                    <text class="tab-desc">查看所有记录和报告</text>
+                </view>
             </view>
         </view>
     </view>
@@ -162,6 +168,12 @@
                     success: () => {
                         uni.setStorageSync('userInfo', this.userInfo);
                     }
+                });
+            },
+
+            goToAdmin() {
+                uni.navigateTo({
+                    url: '/pages/admin/records'
                 });
             },
 
@@ -303,5 +315,9 @@
 
     .business {
         border-left: 12rpx solid #007AFF;
+    }
+
+    .admin {
+        border-left: 12rpx solid #6C757D;
     }
 </style>

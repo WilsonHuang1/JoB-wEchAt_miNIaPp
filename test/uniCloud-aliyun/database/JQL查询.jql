@@ -1,1 +1,1 @@
-db.collection('business_info').get()
+db.collection('tankan_records').get()

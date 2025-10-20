@@ -55,6 +55,19 @@
             }
         },
         {
+            "path": "pages/admin/records",
+            "style": {
+                "navigationBarTitleText": "踏勘记录管理"
+            }
+        },
+        {
+            "path": "pages/admin/login",
+            "style": {
+                "navigationBarTitleText": "管理后台登录",
+                "navigationStyle": "custom"
+            }
+        },
+        {
             "path": "pages/site/preview",
             "style": {
                 "navigationBarTitleText": "信息确认",
