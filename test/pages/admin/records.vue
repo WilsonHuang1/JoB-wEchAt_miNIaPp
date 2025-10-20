@@ -36,7 +36,7 @@
                     <text class="col-date">{{ formatDate(record.createTime) }}</text>
                     <view class="col-actions">
                         <button class="btn-view" @click="viewDetails(record)">查看</button>
-                        <button class="btn-download" @click="downloadReport(record._id)">下载报告</button>
+                        <button class="btn-download" @click="showFormatSelection(record._id)">下载报告</button>
                     </view>
                 </view>
             </view>
@@ -122,6 +122,8 @@
                 selectedDate: '',
                 loading: false,
                 showModal: false,
+                showFormatModal: false,
+                selectedRecordId: '',
                 selectedRecord: {}
             };
         },
@@ -231,7 +233,25 @@
                 this.showModal = false;
             },
 
-            async downloadReport(recordId) {
+            showFormatSelection(recordId) { // or just showFormatSelection() for site/index.vue
+                uni.showActionSheet({
+                    itemList: [
+                        'Excel格式',
+                        'PDF格式',
+                        'Word格式'
+                    ],
+                    success: (res) => {
+                        let format = 'excel';
+                        if (res.tapIndex === 1) format = 'pdf';
+                        if (res.tapIndex === 2) format = 'word';
+
+                        this.downloadReport(recordId,
+                            format); // or this.generateDocument(format) for site/index.vue
+                    }
+                });
+            },
+
+            async downloadReport(recordId, format) {
                 uni.showLoading({
                     title: '生成报告中...'
                 });
@@ -241,7 +261,8 @@
                         name: 'generate-report',
                         data: {
                             recordId: recordId,
-                            recordType: 'tankan'
+                            recordType: 'tankan',
+                            format: format
                         }
                     });
 
@@ -284,13 +305,17 @@
                             });
                         }
                     } else {
-                        throw new Error(result.result.message);
+                        uni.hideLoading();
+                        uni.showToast({
+                            title: '报告生成失败',
+                            icon: 'none'
+                        });
                     }
                 } catch (error) {
                     uni.hideLoading();
-                    console.error('下载报告失败:', error);
+                    console.error('报告下载失败:', error);
                     uni.showToast({
-                        title: '下载失败: ' + error.message,
+                        title: '下载失败',
                         icon: 'none'
                     });
                 }

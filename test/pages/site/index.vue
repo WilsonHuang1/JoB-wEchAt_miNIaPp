@@ -260,7 +260,7 @@
                                     <text>正在生成踏勘报告...</text>
                                 </view>
                                 <view class="doc-actions" v-else>
-                                    <button class="doc-btn" @click="generateDocument" :disabled="!recordId">
+                                    <button class="doc-btn" @click="showFormatSelection" :disabled="!recordId">
                                         生成踏勘报告
                                     </button>
                                     <button class="doc-btn-download" @click="downloadReport" v-if="documentGenerated">
@@ -650,7 +650,25 @@
                 });
             },
 
-            async generateDocument() {
+            showFormatSelection(recordId) { // or just showFormatSelection() for site/index.vue
+                uni.showActionSheet({
+                    itemList: [
+                        'Excel格式',
+                        'PDF格式',
+                        'Word格式'
+                    ],
+                    success: (res) => {
+                        let format = 'excel';
+                        if (res.tapIndex === 1) format = 'pdf';
+                        if (res.tapIndex === 2) format = 'word';
+
+                        this.downloadReport(recordId,
+                            format); // or this.generateDocument(format) for site/index.vue
+                    }
+                });
+            },
+
+            async generateDocument(format) {
                 if (!this.recordId) {
                     uni.showToast({
                         title: '请先保存记录',
@@ -666,7 +684,8 @@
                         name: 'generate-report',
                         data: {
                             recordId: this.recordId,
-                            recordType: 'tankan'
+                            recordType: 'tankan',
+                            format: format
                         }
                     });
 
