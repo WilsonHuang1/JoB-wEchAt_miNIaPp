@@ -192,9 +192,10 @@
                                         <view class="photo-preview-grid" v-if="item.specs.photoBefore.length > 0">
                                             <view class="photo-item"
                                                 v-for="(photo, photoIndex) in item.specs.photoBefore" :key="photoIndex">
-                                                <image class="photo-image" :src="photo" mode="aspectFill"></image>
+                                                <image class="photo-image" :src="photo" mode="aspectFill"
+                                                    @click="reEditPhoto(photo, index, 'before', photoIndex)"></image>
                                                 <view class="photo-delete"
-                                                    @click="deletePhoto(index, 'before', photoIndex)">×</view>
+                                                    @click.stop="deletePhoto(index, 'before', photoIndex)">×</view>
                                             </view>
                                         </view>
                                     </view>
@@ -373,6 +374,63 @@
             this.formData.guishu = this.userInfo.company;
             this.formData.tankanyuan = this.userInfo.name;
         },
+
+        onShow() {
+            // Check if returning from annotation editor
+            const annotatedPhoto = uni.getStorageSync('annotatedPhotoResult');
+            const context = uni.getStorageSync('annotationContext');
+            const reEditContext = uni.getStorageSync('reEditContext');
+
+            if (annotatedPhoto && reEditContext) {
+                // Re-editing existing photo
+                const {
+                    itemIndex,
+                    type,
+                    photoIndex
+                } = reEditContext;
+
+                if (this.addedItems[itemIndex]) {
+                    const specs = this.addedItems[itemIndex].specs;
+                    if (type === 'before' && specs.photoBefore[photoIndex]) {
+                        // Replace the photo at the specific index
+                        this.$set(specs.photoBefore, photoIndex, annotatedPhoto);
+                    }
+                }
+
+                // Clear storage
+                uni.removeStorageSync('annotatedPhotoResult');
+                uni.removeStorageSync('reEditContext');
+
+                uni.showToast({
+                    title: '照片已更新',
+                    icon: 'success'
+                });
+
+            } else if (annotatedPhoto && context) {
+                // Adding new photo
+                const {
+                    itemIndex,
+                    type
+                } = context;
+
+                if (this.addedItems[itemIndex]) {
+                    const specs = this.addedItems[itemIndex].specs;
+                    if (type === 'before') {
+                        specs.photoBefore.push(annotatedPhoto);
+                    }
+                }
+
+                // Clear storage
+                uni.removeStorageSync('annotatedPhotoResult');
+                uni.removeStorageSync('annotationContext');
+
+                uni.showToast({
+                    title: '照片已添加',
+                    icon: 'success'
+                });
+            }
+        },
+
         methods: {
             // Step navigation and completion
             goToStep(targetStep) {
@@ -616,18 +674,12 @@
 
             takePhoto(itemIndex, type) {
                 uni.chooseImage({
-                    count: 9,
+                    count: 1,
                     sizeType: ['original', 'compressed'],
                     sourceType: ['album', 'camera'],
                     success: (res) => {
-                        const specs = this.addedItems[itemIndex].specs;
-                        if (type === 'before') {
-                            specs.photoBefore.push(...res.tempFilePaths);
-                        }
-                        uni.showToast({
-                            title: `已添加${res.tempFilePaths.length}张照片`,
-                            icon: 'success'
-                        });
+                        const photoPath = res.tempFilePaths[0];
+                        this.openAnnotationEditor(photoPath, itemIndex, type);
                     },
                     fail: (err) => {
                         console.log('拍照失败', err);
@@ -636,6 +688,33 @@
                             icon: 'none'
                         });
                     }
+                });
+            },
+
+            openAnnotationEditor(photoPath, itemIndex, type) {
+                uni.setStorageSync('annotationContext', {
+                    photoPath: photoPath,
+                    itemIndex: itemIndex,
+                    type: type,
+                    returnPage: '/pages/site/index'
+                });
+
+                uni.navigateTo({
+                    url: `/pages/annotation/editor?photo=${encodeURIComponent(photoPath)}`
+                });
+            },
+
+            reEditPhoto(photoPath, itemIndex, type, photoIndex) {
+                uni.setStorageSync('reEditContext', {
+                    photoPath: photoPath,
+                    itemIndex: itemIndex,
+                    type: type,
+                    photoIndex: photoIndex,
+                    returnPage: '/pages/site/index'
+                });
+
+                uni.navigateTo({
+                    url: `/pages/annotation/editor?photo=${encodeURIComponent(photoPath)}`
                 });
             },
 

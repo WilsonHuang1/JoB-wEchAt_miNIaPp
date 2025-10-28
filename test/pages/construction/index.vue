@@ -97,12 +97,12 @@
                                     </button>
                                     <view class="photo-preview-grid"
                                         v-if="getCustomPhotoCount('before', item.value) > 0">
-                                        <view class="photo-item"
-                                            v-for="(photo, photoIndex) in customOptionPhotos.before[item.value]"
+                                        <view class="photo-item" v-for="(photo, photoIndex) in workPhotos"
                                             :key="photoIndex">
-                                            <image class="photo-image" :src="photo" mode="aspectFill"></image>
-                                            <view class="photo-delete"
-                                                @click="deleteCustomOptionPhoto('before', item.value, photoIndex)">×
+                                            <image class="photo-image" :src="photo" mode="aspectFill"
+                                                @click="reEditPhoto(photo, 'work', null, null, null, photoIndex)">
+                                            </image>
+                                            <view class="photo-delete" @click.stop="deleteWorkPhoto(photoIndex)">×
                                             </view>
                                         </view>
                                     </view>
@@ -120,13 +120,13 @@
                                         </button>
                                         <view class="photo-preview-grid"
                                             v-if="getDetailedPhotoCount('before', item.id, subOption) > 0">
-                                            <view class="photo-item"
-                                                v-for="(photo, photoIndex) in detailedBeforePhotos[item.id][subOption]"
+                                            <view class="photo-item" v-for="(photo, photoIndex) in workPhotos"
                                                 :key="photoIndex">
-                                                <image class="photo-image" :src="photo" mode="aspectFill"></image>
-                                                <view class="photo-delete"
-                                                    @click="deleteDetailedPhoto('before', item.id, subOption, photoIndex)">
-                                                    ×</view>
+                                                <image class="photo-image" :src="photo" mode="aspectFill"
+                                                    @click="reEditPhoto(photo, 'work', null, null, null, photoIndex)">
+                                                </image>
+                                                <view class="photo-delete" @click.stop="deleteWorkPhoto(photoIndex)">×
+                                                </view>
                                             </view>
                                         </view>
                                     </view>
@@ -449,6 +449,89 @@
             }
         },
 
+        onShow() {
+            // Check if returning from annotation editor
+            const annotatedPhoto = uni.getStorageSync('annotatedPhotoResult');
+            const context = uni.getStorageSync('annotationContext');
+            const reEditContext = uni.getStorageSync('reEditContext');
+
+            if (annotatedPhoto && reEditContext) {
+                // Re-editing existing photo
+                const {
+                    photoType,
+                    type,
+                    itemId,
+                    subOption,
+                    photoIndex
+                } = reEditContext;
+
+                if (photoType === 'detailed') {
+                    // Replace in detailed photos
+                    const photosObj = type === 'before' ? this.detailedBeforePhotos : this.detailedAfterPhotos;
+                    if (photosObj[itemId] && photosObj[itemId][subOption]) {
+                        this.$set(photosObj[itemId][subOption], photoIndex, annotatedPhoto);
+                    }
+                } else if (photoType === 'custom') {
+                    // Replace in custom photos
+                    if (this.customOptionPhotos[type] && this.customOptionPhotos[type][subOption]) {
+                        this.$set(this.customOptionPhotos[type][subOption], photoIndex, annotatedPhoto);
+                    }
+                } else if (photoType === 'work') {
+                    // Replace in work photos
+                    this.$set(this.workPhotos, photoIndex, annotatedPhoto);
+                }
+
+                uni.removeStorageSync('annotatedPhotoResult');
+                uni.removeStorageSync('reEditContext');
+
+                uni.showToast({
+                    title: '照片已更新',
+                    icon: 'success'
+                });
+
+            } else if (annotatedPhoto && context) {
+                // New photo annotation
+                const {
+                    photoType,
+                    type,
+                    itemId,
+                    subOption
+                } = context;
+
+                if (photoType === 'detailed') {
+                    const photosObj = type === 'before' ? this.detailedBeforePhotos : this.detailedAfterPhotos;
+
+                    if (!photosObj[itemId]) {
+                        this.$set(photosObj, itemId, {});
+                    }
+                    if (!photosObj[itemId][subOption]) {
+                        this.$set(photosObj[itemId], subOption, []);
+                    }
+                    photosObj[itemId][subOption].push(annotatedPhoto);
+
+                } else if (photoType === 'custom') {
+                    if (!this.customOptionPhotos[type]) {
+                        this.$set(this.customOptionPhotos, type, {});
+                    }
+                    if (!this.customOptionPhotos[type][subOption]) {
+                        this.$set(this.customOptionPhotos[type], subOption, []);
+                    }
+                    this.customOptionPhotos[type][subOption].push(annotatedPhoto);
+
+                } else if (photoType === 'work') {
+                    this.workPhotos.push(annotatedPhoto);
+                }
+
+                uni.removeStorageSync('annotatedPhotoResult');
+                uni.removeStorageSync('annotationContext');
+
+                uni.showToast({
+                    title: '照片已添加',
+                    icon: 'success'
+                });
+            }
+        },
+
         methods: {
             // Step navigation with locking
             goToStep(step) {
@@ -579,24 +662,13 @@
             uploadDetailedPhotos(type, itemId, subOption) {
                 console.log(`Upload ${type} photos for ${itemId} - ${subOption}`);
                 uni.chooseImage({
-                    count: 9,
+                    count: 1, // Take one photo at a time for better UX
+                    sizeType: ['original', 'compressed'],
+                    sourceType: ['album', 'camera'],
                     success: (res) => {
-                        const photosObj = type === 'before' ? this.detailedBeforePhotos : this
-                            .detailedAfterPhotos;
-
-                        if (!photosObj[itemId]) {
-                            this.$set(photosObj, itemId, {});
-                        }
-                        if (!photosObj[itemId][subOption]) {
-                            this.$set(photosObj[itemId], subOption, []);
-                        }
-
-                        photosObj[itemId][subOption].push(...res.tempFilePaths);
-
-                        uni.showToast({
-                            title: `已选择 ${res.tempFilePaths.length} 张照片`,
-                            icon: 'success'
-                        });
+                        // Go directly to annotation editor
+                        const photoPath = res.tempFilePaths[0];
+                        this.openAnnotationEditor(photoPath, type, itemId, subOption);
                     },
                     fail: (err) => {
                         console.error('选择图片失败:', err);
@@ -605,6 +677,22 @@
                             icon: 'error'
                         });
                     }
+                });
+            },
+
+            reEditPhoto(photoPath, photoType, type, itemId, subOption, photoIndex) {
+                uni.setStorageSync('reEditContext', {
+                    photoPath: photoPath,
+                    photoType: photoType,
+                    type: type,
+                    itemId: itemId,
+                    subOption: subOption,
+                    photoIndex: photoIndex,
+                    returnPage: '/pages/construction/index'
+                });
+
+                uni.navigateTo({
+                    url: `/pages/annotation/editor?photo=${encodeURIComponent(photoPath)}`
                 });
             },
 
@@ -618,21 +706,12 @@
             uploadCustomOptionPhotos(type, option) {
                 console.log(`Upload ${type} photos for custom option ${option}`);
                 uni.chooseImage({
-                    count: 9,
+                    count: 1,
+                    sizeType: ['original', 'compressed'],
+                    sourceType: ['album', 'camera'],
                     success: (res) => {
-                        if (!this.customOptionPhotos[type]) {
-                            this.$set(this.customOptionPhotos, type, {});
-                        }
-                        if (!this.customOptionPhotos[type][option]) {
-                            this.$set(this.customOptionPhotos[type], option, []);
-                        }
-
-                        this.customOptionPhotos[type][option].push(...res.tempFilePaths);
-
-                        uni.showToast({
-                            title: `已选择 ${res.tempFilePaths.length} 张照片`,
-                            icon: 'success'
-                        });
+                        const photoPath = res.tempFilePaths[0];
+                        this.openAnnotationEditorForCustom(photoPath, type, option);
                     },
                     fail: (err) => {
                         console.error('选择图片失败:', err);
@@ -654,14 +733,12 @@
             uploadWorkPhotos() {
                 console.log('Upload work photos');
                 uni.chooseImage({
-                    count: 9,
+                    count: 1,
+                    sizeType: ['original', 'compressed'],
+                    sourceType: ['album', 'camera'],
                     success: (res) => {
-                        this.workPhotos.push(...res.tempFilePaths);
-
-                        uni.showToast({
-                            title: `已选择 ${res.tempFilePaths.length} 张照片`,
-                            icon: 'success'
-                        });
+                        const photoPath = res.tempFilePaths[0];
+                        this.openAnnotationEditorForWork(photoPath);
                     },
                     fail: (err) => {
                         console.error('选择图片失败:', err);
@@ -787,6 +864,50 @@
                     title: '功能开发中，敬请期待',
                     icon: 'none',
                     duration: 2000
+                });
+            },
+
+            // Open annotation editor for detailed photos
+            openAnnotationEditor(photoPath, type, itemId, subOption) {
+                uni.setStorageSync('annotationContext', {
+                    photoPath: photoPath,
+                    photoType: 'detailed',
+                    type: type,
+                    itemId: itemId,
+                    subOption: subOption,
+                    returnPage: '/pages/construction/index'
+                });
+
+                uni.navigateTo({
+                    url: `/pages/annotation/editor?photo=${encodeURIComponent(photoPath)}`
+                });
+            },
+
+            // Open annotation editor for custom option photos
+            openAnnotationEditorForCustom(photoPath, type, option) {
+                uni.setStorageSync('annotationContext', {
+                    photoPath: photoPath,
+                    photoType: 'custom',
+                    type: type,
+                    option: option,
+                    returnPage: '/pages/construction/index'
+                });
+
+                uni.navigateTo({
+                    url: `/pages/annotation/editor?photo=${encodeURIComponent(photoPath)}`
+                });
+            },
+
+            // Open annotation editor for work photos
+            openAnnotationEditorForWork(photoPath) {
+                uni.setStorageSync('annotationContext', {
+                    photoPath: photoPath,
+                    photoType: 'work',
+                    returnPage: '/pages/construction/index'
+                });
+
+                uni.navigateTo({
+                    url: `/pages/annotation/editor?photo=${encodeURIComponent(photoPath)}`
                 });
             },
 

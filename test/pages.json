@@ -68,6 +68,14 @@
             }
         },
         {
+            "path": "pages/annotation/editor",
+            "style": {
+                "navigationBarTitleText": "照片标注",
+                "navigationStyle": "custom"
+            }
+        },
+
+        {
             "path": "pages/site/preview",
             "style": {
                 "navigationBarTitleText": "信息确认",
