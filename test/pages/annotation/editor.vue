@@ -2,6 +2,17 @@
     <view class="editor-container">
         <!-- Edit Mode -->
         <view v-if="!showPreview" class="edit-mode">
+            <!-- Top Bar -->
+            <view class="top-bar">
+                <view class="top-left">
+                    <text class="btn-top-cancel" @click="handleCancel">取消</text>
+                    <text class="icon-btn" @click="undoAnnotation"
+                        :class="{ disabled: annotations.length === 0 }">↶</text>
+                    <text class="icon-btn" @click="redoAnnotation"
+                        :class="{ disabled: undoStack.length === 0 }">↷</text>
+                </view>
+            </view>
+
             <!-- Photo Preview -->
             <view class="photo-preview" @touchstart="handleContainerTouchStart" @touchmove="handleContainerTouchMove"
                 @touchend="handleContainerTouchEnd">
@@ -18,7 +29,8 @@
                     <view v-if="isAnnotating" class="markers-overlay">
                         <view v-for="(ann, index) in annotations" :key="index" class="marker" :style="{
                                 left: (ann.x * imageDisplayWidth) + 'px',
-                                top: (ann.y * imageDisplayHeight) + 'px'
+                                top: (ann.y * imageDisplayHeight) + 'px',
+                                '--dot-size': (ann.size || 16) + 'px'
                             }" @tap.stop="editAnnotation(index)">
                             <view class="marker-dot" :style="{ 
                                 backgroundColor: ann.color,
@@ -39,89 +51,35 @@
                 height: imageHeight + 'px'
             }"></canvas>
 
-            <!-- Toolbar at bottom -->
-            <view class="toolbar">
-                <view class="toolbar-left">
-                    <button v-if="!isAnnotating" class="btn-edit" @click="startAnnotation">
-                        ✏️ 编辑图片
-                    </button>
-
-                    <view v-if="isAnnotating" class="annotation-tools">
-                        <text class="tool-hint">点击图片添加标注</text>
-
-                        <view class="color-picker">
-                            <view class="color-dot" v-for="color in colors" :key="color" :style="{ 
-                                    backgroundColor: color,
-                                    border: currentColor === color ? '3px solid #fff' : '1px solid #666',
-                                    transform: currentColor === color ? 'scale(1.3)' : 'scale(1)'
-                                }" @click="selectColor(color)"></view>
-                        </view>
-
-                        <!-- Annotation selector dropdown -->
-                        <view v-if="annotations.length > 0" class="annotation-selector">
-                            <picker mode="selector" :range="annotations" range-key="text"
-                                :value="selectedAnnotationIndex" @change="onAnnotationPicked">
-                                <button class="btn-select-pin">
-                                    {{ selectedAnnotationIndex >= 0 ? annotations[selectedAnnotationIndex].text : '选择标注' }}
-                                </button>
-                            </picker>
-
-                            <button v-if="selectedAnnotationIndex >= 0" class="btn-edit-selected"
-                                @click="editAnnotation(selectedAnnotationIndex)">
-                                ✏️
-                            </button>
-
-                            <button v-if="selectedAnnotationIndex >= 0" class="btn-remove-selected"
-                                @click="removeSelectedAnnotation">
-                                🗑️
-                            </button>
-                        </view>
-
-                        <!-- Pin size control -->
-                        <button class="btn-pin-size" @click="togglePinSizeSlider">
-                            📍 {{ pinSize }}px
-                        </button>
-
-                        <button v-if="annotations.length > 0" class="btn-undo" @click="undoAnnotation">
-                            撤销
-                        </button>
-
-                        <button v-if="undoStack.length > 0" class="btn-redo" @click="redoAnnotation">
-                            恢复
-                        </button>
-                    </view>
+            <!-- Bottom Toolbar - WeChat Style -->
+            <view class="bottom-toolbar">
+                <!-- Main tool icons -->
+                <view class="tool-icon" @click="toggleAnnotationMode">
+                    <view class="icon" :class="{ active: isAnnotating }">✏️</view>
+                    <text class="tool-label">标注</text>
                 </view>
 
-                <view class="toolbar-right">
-                    <button v-if="isAnnotating" class="btn-cancel-annotation" @click="cancelAnnotation">
-                        取消
-                    </button>
-                    <button class="btn-done" @click="goToPreview">
-                        下一步
-                    </button>
+                <view class="tool-icon" @click="showColorPicker = !showColorPicker">
+                    <view class="icon color-icon" :style="{ backgroundColor: currentColor }"></view>
+                    <text class="tool-label">颜色</text>
                 </view>
-            </view>
 
-            <!-- Pin size slider (shown when toggled) -->
-            <view v-if="isAnnotating && showPinSizeSlider" class="pin-size-overlay" @click="togglePinSizeSlider">
-                <view class="pin-size-slider-panel" @click.stop>
-                    <view class="slider-header">
-                        <text class="slider-title">调整标注大小</text>
-                        <text class="slider-close" @click="togglePinSizeSlider">✕</text>
-                    </view>
-                    <text class="slider-label">大小: {{ pinSize }}px</text>
-                    <slider :value="pinSize" @change="onPinSizeChange" min="8" max="32" step="2" activeColor="#007AFF"
-                        backgroundColor="#ddd" block-size="12" />
+                <view class="tool-icon" @click="showPinManager = !showPinManager" v-if="annotations.length > 0">
+                    <view class="icon">📍</view>
+                    <text class="tool-label">管理</text>
+                    <view class="badge">{{ annotations.length }}</view>
+                </view>
 
-                    <!-- Preview of pin size -->
-                    <view class="pin-preview">
-                        <text class="preview-label">预览:</text>
-                        <view class="preview-pin" :style="{
-                            width: pinSize + 'px',
-                            height: pinSize + 'px',
-                            backgroundColor: currentColor
-                        }"></view>
-                    </view>
+                <view class="tool-icon" @click="showPinSizeSlider = !showPinSizeSlider">
+                    <view class="icon">🔍</view>
+                    <text class="tool-label">{{ pinSize }}px</text>
+                </view>
+
+                <view class="spacer"></view>
+
+                <!-- Done button -->
+                <view class="btn-done-wechat" @click="goToPreview">
+                    <text>完成</text>
                 </view>
             </view>
 
@@ -150,13 +108,92 @@
             </view>
         </view>
 
-        <!-- Text input modal -->
+        <!-- Color Picker Panel -->
+        <view v-if="showColorPicker" class="popup-overlay" @click="showColorPicker = false">
+            <view class="popup-panel" @click.stop>
+                <view class="panel-header">
+                    <text class="panel-title">选择颜色</text>
+                    <text class="panel-close" @click="showColorPicker = false">✕</text>
+                </view>
+                <view class="color-grid">
+                    <view v-for="color in colors" :key="color" class="color-option" @click="selectColor(color)">
+                        <view class="color-circle" :style="{ backgroundColor: color }">
+                            <text v-if="currentColor === color" class="check-mark">✓</text>
+                        </view>
+                    </view>
+                </view>
+            </view>
+        </view>
+
+        <!-- Pin Manager Panel -->
+        <view v-if="showPinManager" class="popup-overlay" @click="showPinManager = false">
+            <view class="popup-panel" @click.stop>
+                <view class="panel-header">
+                    <text class="panel-title">管理标注</text>
+                    <text class="panel-close" @click="showPinManager = false">✕</text>
+                </view>
+                <view class="pin-list">
+                    <view v-for="(ann, index) in annotations" :key="index" class="pin-item">
+                        <view class="pin-dot-small" :style="{ backgroundColor: ann.color }"></view>
+                        <text class="pin-text">{{ ann.text }}</text>
+                        <view class="pin-actions">
+                            <text class="pin-action-btn edit" @click="editAnnotation(index)">✏️</text>
+                            <text class="pin-action-btn delete" @click="deleteAnnotationByIndex(index)">🗑️</text>
+                        </view>
+                    </view>
+                </view>
+            </view>
+        </view>
+
+        <!-- Pin Size Slider -->
+        <view v-if="showPinSizeSlider" class="popup-overlay" @click="showPinSizeSlider = false">
+            <view class="popup-panel" @click.stop>
+                <view class="panel-header">
+                    <text class="panel-title">调整大小</text>
+                    <text class="panel-close" @click="showPinSizeSlider = false">✕</text>
+                </view>
+                <view class="size-content">
+                    <text class="size-label">标注大小: {{ pinSize }}px</text>
+                    <slider :value="pinSize" @change="onPinSizeChange" min="8" max="32" step="2" activeColor="#07C160"
+                        backgroundColor="#e5e5e5" block-size="20" />
+                    <view class="size-preview">
+                        <text class="preview-text">预览:</text>
+                        <view class="preview-dot" :style="{
+                            width: pinSize + 'px',
+                            height: pinSize + 'px',
+                            backgroundColor: currentColor
+                        }"></view>
+                    </view>
+                </view>
+            </view>
+        </view>
+
+        <!-- Text Input Modal -->
         <view class="text-modal" v-if="showTextModal" @click="cancelTextInput">
             <view class="text-modal-content" @click.stop>
                 <text class="modal-title">{{ editingIndex >= 0 ? '编辑标注' : '添加标注说明' }}</text>
                 <input class="text-input" v-model="textInput" placeholder="输入标注内容..." maxlength="30"
                     :focus="showTextModal" />
                 <text class="char-count">{{ textInput.length }}/30</text>
+                <view v-if="editingIndex >= 0" class="modal-size-control">
+                    <text class="size-label-modal">大小: {{ pinSize }}px</text>
+                    <slider :value="pinSize" @change="onPinSizeChange" min="8" max="32" step="2" activeColor="#07C160"
+                        backgroundColor="#e5e5e5" block-size="12" />
+                </view>
+
+                <!-- Color picker when editing -->
+                <view v-if="editingIndex >= 0" class="modal-color-control">
+                    <text class="color-label-modal">颜色</text>
+                    <view class="modal-color-grid">
+                        <view v-for="color in colors" :key="color" class="modal-color-option"
+                            @click="selectColor(color)">
+                            <view class="modal-color-circle" :style="{ backgroundColor: color }">
+                                <text v-if="currentColor === color" class="modal-check-mark">✓</text>
+                            </view>
+                        </view>
+                    </view>
+                </view>
+
                 <view class="modal-buttons">
                     <button v-if="editingIndex >= 0" class="btn-modal-delete" @click="deleteAnnotation">删除</button>
                     <button class="btn-modal-cancel" @click="cancelTextInput">取消</button>
@@ -184,6 +221,9 @@
                 imageDisplayHeight: 0,
                 containerWidth: 0,
                 containerHeight: 0,
+
+                showColorPicker: false,
+                showPinManager: false,
 
                 currentColor: '#FF0000',
                 colors: ['#FF0000', '#FFA500', '#FFFF00', '#00FF00', '#0000FF', '#FFFFFF'],
@@ -319,6 +359,37 @@
                 if (this.undoStack.length > 0) {
                     const restored = this.undoStack.pop();
                     this.annotations.push(restored);
+                }
+            },
+
+            toggleAnnotationMode() {
+                if (this.isAnnotating) {
+                    this.cancelAnnotation();
+                } else {
+                    this.startAnnotation();
+                }
+            },
+
+            deleteAnnotationByIndex(index) {
+                this.annotations.splice(index, 1);
+                if (this.annotations.length === 0) {
+                    this.showPinManager = false;
+                }
+            },
+
+            handleCancel() {
+                if (this.isAnnotating && this.annotations.length > 0) {
+                    uni.showModal({
+                        title: '取消编辑',
+                        content: '确定要取消所有标注吗？',
+                        success: (res) => {
+                            if (res.confirm) {
+                                uni.navigateBack();
+                            }
+                        }
+                    });
+                } else {
+                    uni.navigateBack();
                 }
             },
 
@@ -477,6 +548,8 @@
             editAnnotation(index) {
                 this.editingIndex = index;
                 this.textInput = this.annotations[index].text;
+                this.currentColor = this.annotations[index].color;
+                this.pinSize = this.annotations[index].size || 16;
                 this.showTextModal = true;
             },
 
@@ -485,24 +558,21 @@
             },
 
             onPinSizeChange(e) {
-                // Prevent infinite loop
                 if (this._updatingPinSize) return;
                 this._updatingPinSize = true;
 
                 this.pinSize = e.detail.value;
-                console.log('Pin size changed to:', this.pinSize);
 
-                // Force re-render by replacing the array
-                const updated = this.annotations.map(ann => ({
-                    ...ann,
-                    size: this.pinSize
-                }));
-                this.annotations = updated;
+                // Update the selected annotation's size if one is selected
+                if (this.selectedAnnotationIndex >= 0) {
+                    this.annotations[this.selectedAnnotationIndex].size = this.pinSize;
+                    // Force reactivity update
+                    this.annotations = [...this.annotations];
+                }
 
-                // Reset flag after a delay
-                setTimeout(() => {
+                this.$nextTick(() => {
                     this._updatingPinSize = false;
-                }, 100);
+                });
             },
 
             deleteAnnotation() {
@@ -541,9 +611,10 @@
                 const text = this.textInput.trim() || '标注';
 
                 if (this.editingIndex >= 0) {
-                    // Editing existing annotation
+                    // Editing existing annotation - update size too
                     this.annotations[this.editingIndex].text = text;
                     this.annotations[this.editingIndex].color = this.currentColor;
+                    this.annotations[this.editingIndex].size = this.pinSize; // Add this line
                 } else {
                     // Adding new annotation
                     this.annotations.push({
@@ -591,12 +662,12 @@
                     this.annotations.forEach(ann => {
                         const x = ann.x * canvasWidth;
                         const y = ann.y * canvasHeight;
-                        const radius = ann.size || 16;
+                        const radius = (ann.size || 16) / 2;
 
                         // Draw pin dot
                         ctx.setFillStyle(ann.color);
                         ctx.beginPath();
-                        ctx.arc(x, y, radius, 0, 2 * Math.PI);
+                        ctx.arc(x, y, (ann.size || 16) / 2, 0, 2 * Math.PI);
                         ctx.fill();
 
                         // Draw white border
@@ -684,6 +755,52 @@
         flex-direction: column;
     }
 
+    /* Top Bar */
+    .top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20rpx 30rpx;
+        padding-top: 60rpx;
+        /* Add extra padding for mini app bar */
+        background-color: rgba(0, 0, 0, 0.5);
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+    }
+
+    .top-left {
+        display: flex;
+        align-items: center;
+        gap: 30rpx;
+    }
+
+    .btn-top-cancel {
+        color: white;
+        font-size: 32rpx;
+        padding: 10rpx;
+    }
+
+    .top-actions {
+        display: flex;
+        gap: 30rpx;
+    }
+
+    .icon-btn {
+        color: white;
+        font-size: 48rpx;
+        padding: 10rpx;
+        font-weight: bold;
+    }
+
+    .icon-btn.disabled {
+        color: #666;
+        opacity: 0.5;
+    }
+
+    /* Photo Preview */
     .photo-preview {
         flex: 1;
         position: relative;
@@ -716,29 +833,261 @@
 
     .marker {
         position: absolute;
-        transform: translate(-8px, -8px);
         pointer-events: all;
         display: flex;
         align-items: center;
-        gap: 5px;
+        gap: 8rpx;
     }
 
     .marker-dot {
         border-radius: 50%;
-        border: 2px solid #fff;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        border: 3rpx solid #fff;
+        box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.3);
+        flex-shrink: 0;
+        /* Center the dot on the coordinates */
+        margin-left: calc(var(--dot-size) / -2);
+        margin-top: calc(var(--dot-size) / -2);
     }
 
     .marker-text {
-        background-color: rgba(0, 0, 0, 0.8);
+        background-color: rgba(0, 0, 0, 0.85);
         color: #fff;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 14px;
+        padding: 6rpx 16rpx;
+        border-radius: 8rpx;
+        font-size: 24rpx;
         white-space: nowrap;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.3);
+        margin-left: 4rpx;
     }
 
+    /* Bottom Toolbar - WeChat Style */
+    .bottom-toolbar {
+        display: flex;
+        align-items: center;
+        padding: 20rpx 30rpx;
+        background-color: rgba(26, 26, 26, 0.98);
+        gap: 40rpx;
+    }
+
+    .tool-icon {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8rpx;
+        position: relative;
+    }
+
+    .icon {
+        width: 80rpx;
+        height: 80rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 48rpx;
+        border-radius: 12rpx;
+        background-color: rgba(255, 255, 255, 0.1);
+        transition: all 0.2s;
+    }
+
+    .icon.active {
+        background-color: rgba(7, 193, 96, 0.2);
+        transform: scale(1.1);
+    }
+
+    .color-icon {
+        border: 4rpx solid white;
+        box-shadow: 0 0 0 2rpx rgba(255, 255, 255, 0.3);
+    }
+
+    .tool-label {
+        color: white;
+        font-size: 22rpx;
+    }
+
+    .badge {
+        position: absolute;
+        top: -8rpx;
+        right: -8rpx;
+        background-color: #ff4444;
+        color: white;
+        font-size: 20rpx;
+        padding: 2rpx 10rpx;
+        border-radius: 20rpx;
+        min-width: 32rpx;
+        text-align: center;
+    }
+
+    .spacer {
+        flex: 1;
+    }
+
+    .btn-done-wechat {
+        background-color: #07C160;
+        color: white;
+        padding: 20rpx 50rpx;
+        border-radius: 12rpx;
+        font-size: 32rpx;
+        font-weight: bold;
+    }
+
+    /* Popup Overlay */
+    .popup-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.6);
+        z-index: 500;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+    }
+
+    .popup-panel {
+        width: 100%;
+        background-color: white;
+        border-radius: 32rpx 32rpx 0 0;
+        padding: 40rpx;
+        max-height: 70vh;
+        overflow-y: auto;
+        animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(100%);
+        }
+
+        to {
+            transform: translateY(0);
+        }
+    }
+
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 40rpx;
+    }
+
+    .panel-title {
+        font-size: 36rpx;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .panel-close {
+        font-size: 48rpx;
+        color: #999;
+        padding: 0 20rpx;
+    }
+
+    /* Color Picker */
+    .color-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 30rpx;
+    }
+
+    .color-option {
+        display: flex;
+        justify-content: center;
+    }
+
+    .color-circle {
+        width: 100rpx;
+        height: 100rpx;
+        border-radius: 50%;
+        border: 4rpx solid #e5e5e5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .check-mark {
+        color: white;
+        font-size: 48rpx;
+        font-weight: bold;
+        text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.3);
+    }
+
+    /* Pin Manager */
+    .pin-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20rpx;
+    }
+
+    .pin-item {
+        display: flex;
+        align-items: center;
+        padding: 30rpx;
+        background-color: #f8f8f8;
+        border-radius: 16rpx;
+        gap: 20rpx;
+    }
+
+    .pin-dot-small {
+        width: 40rpx;
+        height: 40rpx;
+        border-radius: 50%;
+        border: 3rpx solid white;
+        box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.2);
+    }
+
+    .pin-text {
+        flex: 1;
+        font-size: 28rpx;
+        color: #333;
+    }
+
+    .pin-actions {
+        display: flex;
+        gap: 20rpx;
+    }
+
+    .pin-action-btn {
+        font-size: 36rpx;
+        padding: 10rpx 20rpx;
+    }
+
+    /* Size Slider */
+    .size-content {
+        padding: 20rpx 0;
+    }
+
+    .size-label {
+        display: block;
+        font-size: 28rpx;
+        color: #333;
+        margin-bottom: 30rpx;
+    }
+
+    .size-preview {
+        display: flex;
+        align-items: center;
+        gap: 30rpx;
+        margin-top: 40rpx;
+        padding: 40rpx;
+        background-color: #f8f8f8;
+        border-radius: 16rpx;
+        justify-content: center;
+    }
+
+    .preview-text {
+        font-size: 28rpx;
+        color: #666;
+    }
+
+    .preview-dot {
+        border-radius: 50%;
+        border: 3rpx solid white;
+        box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.2);
+    }
+
+    /* Zoom Indicator */
     .zoom-indicator {
         position: absolute;
         top: 50%;
@@ -746,98 +1095,15 @@
         transform: translate(-50%, -50%);
         background-color: rgba(0, 0, 0, 0.7);
         color: white;
-        padding: 20rpx 40rpx;
-        border-radius: 12rpx;
-        font-size: 40rpx;
+        padding: 30rpx 60rpx;
+        border-radius: 16rpx;
+        font-size: 48rpx;
         font-weight: bold;
         pointer-events: none;
         z-index: 100;
     }
 
-    .toolbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 20rpx 30rpx;
-        background-color: rgba(26, 26, 26, 0.95);
-        backdrop-filter: blur(10px);
-    }
-
-    .toolbar-left {
-        display: flex;
-        align-items: center;
-        gap: 15rpx;
-        flex: 1;
-    }
-
-    .btn-edit {
-        padding: 15rpx 30rpx;
-        background-color: #007AFF;
-        color: white;
-        border: none;
-        border-radius: 8rpx;
-        font-size: 28rpx;
-    }
-
-    .annotation-tools {
-        display: flex;
-        align-items: center;
-        gap: 20rpx;
-        flex-wrap: wrap;
-        flex: 1;
-    }
-
-    .tool-hint {
-        color: #999;
-        font-size: 24rpx;
-    }
-
-    .color-picker {
-        display: flex;
-        gap: 12rpx;
-    }
-
-    .color-dot {
-        width: 50rpx;
-        height: 50rpx;
-        border-radius: 50%;
-        transition: all 0.2s;
-    }
-
-    .btn-undo {
-        padding: 10rpx 25rpx;
-        background-color: #dc3545;
-        color: white;
-        border: none;
-        border-radius: 8rpx;
-        font-size: 24rpx;
-    }
-
-    .toolbar-right {
-        display: flex;
-        gap: 15rpx;
-        align-items: center;
-    }
-
-    .btn-cancel-annotation {
-        padding: 15rpx 25rpx;
-        background-color: #666;
-        color: white;
-        border: none;
-        border-radius: 8rpx;
-        font-size: 26rpx;
-    }
-
-    .btn-done {
-        padding: 15rpx 40rpx;
-        background-color: #34C759;
-        color: white;
-        border: none;
-        border-radius: 8rpx;
-        font-size: 28rpx;
-        font-weight: bold;
-    }
-
+    /* Preview Mode */
     .preview-header {
         padding: 30rpx;
         background-color: #1a1a1a;
@@ -846,7 +1112,7 @@
 
     .preview-title {
         color: white;
-        font-size: 32rpx;
+        font-size: 36rpx;
         font-weight: bold;
     }
 
@@ -855,7 +1121,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 20rpx;
+        padding: 30rpx;
     }
 
     .preview-final-image {
@@ -865,7 +1131,7 @@
 
     .preview-actions {
         display: flex;
-        gap: 20rpx;
+        gap: 30rpx;
         padding: 30rpx;
         background-color: #1a1a1a;
     }
@@ -873,10 +1139,10 @@
     .btn-preview-back,
     .btn-preview-confirm {
         flex: 1;
-        padding: 25rpx;
+        padding: 30rpx;
         border: none;
-        border-radius: 12rpx;
-        font-size: 30rpx;
+        border-radius: 16rpx;
+        font-size: 32rpx;
         font-weight: bold;
     }
 
@@ -886,10 +1152,11 @@
     }
 
     .btn-preview-confirm {
-        background-color: #34C759;
+        background-color: #07C160;
         color: white;
     }
 
+    /* Text Modal */
     .text-modal {
         position: fixed;
         top: 0;
@@ -901,75 +1168,64 @@
         align-items: flex-end;
         justify-content: center;
         z-index: 9999;
-        padding-bottom: 100rpx;
     }
 
     .text-modal-content {
-        width: 90%;
+        width: 100%;
         background-color: white;
-        border-radius: 16rpx;
-        padding: 30rpx;
+        border-radius: 32rpx 32rpx 0 0;
+        padding: 40rpx;
         animation: slideUp 0.3s ease-out;
-    }
-
-    @keyframes slideUp {
-        from {
-            transform: translateY(100%);
-            opacity: 0;
-        }
-
-        to {
-            transform: translateY(0);
-            opacity: 1;
-        }
     }
 
     .modal-title {
         display: block;
-        font-size: 30rpx;
+        font-size: 36rpx;
         font-weight: bold;
-        margin-bottom: 20rpx;
+        margin-bottom: 30rpx;
+        color: #333;
     }
 
     .text-input {
         width: 100%;
-        padding: 20rpx;
+        padding: 30rpx;
         border: 2rpx solid #e5e5e5;
-        border-radius: 8rpx;
-        font-size: 28rpx;
-        margin-bottom: 10rpx;
+        border-radius: 16rpx;
+        font-size: 32rpx;
+        margin-bottom: 20rpx;
         background-color: #f8f8f8;
     }
 
     .char-count {
         display: block;
         text-align: right;
-        font-size: 22rpx;
+        font-size: 24rpx;
         color: #999;
-        margin-bottom: 20rpx;
+        margin-bottom: 30rpx;
     }
 
     .modal-buttons {
         display: flex;
-        gap: 15rpx;
+        gap: 20rpx;
     }
 
     .btn-modal-delete {
-        padding: 18rpx 25rpx;
-        background-color: #dc3545;
+        padding: 25rpx 30rpx;
+        background-color: #ff4444;
         color: white;
         border: none;
-        border-radius: 8rpx;
-        font-size: 26rpx;
+        border-radius: 12rpx;
+        font-size: 28rpx;
     }
 
     .btn-modal-cancel,
     .btn-modal-confirm {
         flex: 1;
-        padding: 18rpx;
+        padding: 25rpx;
         border: none;
-        border-radius: 8rpx;
-        font-size: 28rpx;
+        border-radius: 12rpx;
+        font-size: 30rpx;
+        font-weight: bold;
     }
 
     .btn-modal-cancel {
@@ -978,140 +1234,64 @@
     }
 
     .btn-modal-confirm {
-        background-color: #007AFF;
+        background-color: #07C160;
         color: white;
     }
 
-    .annotation-selector {
-        display: flex;
-        align-items: center;
-        gap: 10rpx;
-    }
-
-    .btn-select-pin {
-        padding: 10rpx 20rpx;
-        background-color: #555;
-        color: white;
-        border: none;
-        border-radius: 8rpx;
-        font-size: 24rpx;
-        max-width: 200rpx;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .btn-edit-selected {
-        padding: 10rpx 20rpx;
-        background-color: #007AFF;
-        color: white;
-        border: none;
-        border-radius: 8rpx;
-        font-size: 24rpx;
-    }
-
-    .btn-remove-selected {
-        padding: 10rpx 20rpx;
-        background-color: #dc3545;
-        color: white;
-        border: none;
-        border-radius: 8rpx;
-        font-size: 24rpx;
-    }
-
-    .btn-pin-size {
-        padding: 10rpx 20rpx;
-        background-color: #444;
-        color: white;
-        border: none;
-        border-radius: 8rpx;
-        font-size: 24rpx;
-    }
-
-    .pin-size-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 200;
-        display: flex;
-        align-items: flex-end;
-        justify-content: center;
-    }
-
-    .pin-size-slider-panel {
-        width: 90%;
-        background-color: rgba(26, 26, 26, 0.98);
-        padding: 40rpx;
-        border-radius: 24rpx 24rpx 0 0;
-        backdrop-filter: blur(10px);
-        margin-bottom: 0;
-        min-height: 300rpx;
-    }
-
-    .slider-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30rpx;
-    }
-
-    .slider-title {
-        color: white;
-        font-size: 32rpx;
-        font-weight: bold;
-    }
-
-    .slider-close {
-        color: white;
-        font-size: 36rpx;
-        padding: 0 10rpx;
-        cursor: pointer;
-    }
-
-    .slider-label {
-        display: block;
-        color: white;
-        font-size: 28rpx;
-        margin-bottom: 30rpx;
-    }
-
-    .pin-preview {
-        display: flex;
-        align-items: center;
-        gap: 20rpx;
-        margin-top: 40rpx;
-        padding: 30rpx;
-        background-color: rgba(255, 255, 255, 0.1);
+    .modal-size-control {
+        margin: 20rpx 0;
+        padding: 20rpx;
+        background-color: #f8f8f8;
         border-radius: 12rpx;
     }
 
-    .preview-label {
-        color: white;
-        font-size: 26rpx;
-    }
-
-    .preview-pin {
-        border-radius: 50%;
-        border: 2px solid #fff;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-    }
-
-    .slider-label {
+    .size-label-modal {
         display: block;
-        color: white;
         font-size: 26rpx;
+        color: #666;
         margin-bottom: 20rpx;
     }
 
-    .btn-redo {
-        padding: 10rpx 25rpx;
-        background-color: #28a745;
+    .modal-color-control {
+        margin: 20rpx 0;
+        padding: 30rpx;
+        background-color: #f8f8f8;
+        border-radius: 12rpx;
+    }
+
+    .color-label-modal {
+        display: block;
+        font-size: 26rpx;
+        color: #666;
+        margin-bottom: 20rpx;
+    }
+
+    .modal-color-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 20rpx;
+    }
+
+    .modal-color-option {
+        display: flex;
+        justify-content: center;
+    }
+
+    .modal-color-circle {
+        width: 70rpx;
+        height: 70rpx;
+        border-radius: 50%;
+        border: 3rpx solid #ddd;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .modal-check-mark {
         color: white;
-        border: none;
-        border-radius: 8rpx;
-        font-size: 24rpx;
+        font-size: 36rpx;
+        font-weight: bold;
+        text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.5);
     }
 </style>
